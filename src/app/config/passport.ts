@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcryptjs from "bcryptjs";
 import passport from "passport";
@@ -62,7 +63,7 @@ passport.use(
                         email,
                         name: profile.displayName,
                         picture: profile.photos?.[0].value,
-                        role: Role.SENDER,
+                        role: Role.TOURIST,
                         isVerified: true,
                         auths: [
                             {
