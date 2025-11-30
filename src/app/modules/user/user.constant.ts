@@ -1,2 +1,1 @@
-export const userSearchableFields = ["name", "email", "role", "isActive"];
-
+export const userSearchableFields = ["name", "email", "guideProfile.expertise", "guideProfile.languages", "touristProfile.preferences"];

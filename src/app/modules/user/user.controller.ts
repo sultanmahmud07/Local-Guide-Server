@@ -1,12 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextFunction, Request, Response } from "express";
+
+import { Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { UserServices } from "./user.service";
 
-const createUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const createUser = catchAsync(async (req: Request, res: Response) => {
     const user = await UserServices.createUser(req.body)
 
     sendResponse(res, {
@@ -17,7 +17,7 @@ const createUser = catchAsync(async (req: Request, res: Response, next: NextFunc
     })
 })
 
-const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const updateUser = catchAsync(async (req: Request, res: Response) => {
     const userId = req.params.id;
     const verifiedToken = req.user;
     const payload = req.body;
@@ -31,7 +31,7 @@ const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunc
     })
 })
 
-const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     const result = await UserServices.getAllUsers(query as Record<string, string>);
 
@@ -43,7 +43,7 @@ const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFun
         meta: result.meta
     })
 })
-const getAllAdmin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     const result = await UserServices.getAllAdmin(query as Record<string, string>);
 
@@ -55,7 +55,7 @@ const getAllAdmin = catchAsync(async (req: Request, res: Response, next: NextFun
         meta: result.meta
     })
 })
-const getAllDeletedUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getAllDeletedUsers = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     const result = await UserServices.getAllDeletedUsers(query as Record<string, string>);
 
@@ -67,7 +67,7 @@ const getAllDeletedUsers = catchAsync(async (req: Request, res: Response, next: 
         meta: result.meta
     })
 })
-const getAllUnauthorizedUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getAllUnauthorizedUsers = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     const result = await UserServices.getAllUnauthorizedUsers(query as Record<string, string>);
 
@@ -79,8 +79,8 @@ const getAllUnauthorizedUsers = catchAsync(async (req: Request, res: Response, n
         meta: result.meta
     })
 })
-const getAllSender = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await UserServices.getAllSender();
+const getAllTourist = catchAsync(async (req: Request, res: Response) => {
+    const result = await UserServices.getAllTourist();
 
     sendResponse(res, {
         success: true,
@@ -90,8 +90,8 @@ const getAllSender = catchAsync(async (req: Request, res: Response, next: NextFu
         meta: result.meta
     })
 })
-const getAllReceiver = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await UserServices.getAllReceiver();
+const getAllGuide = catchAsync(async (req: Request, res: Response) => {
+    const result = await UserServices.getAllGuide();
 
     sendResponse(res, {
         success: true,
@@ -101,7 +101,7 @@ const getAllReceiver = catchAsync(async (req: Request, res: Response, next: Next
         meta: result.meta
     })
 })
-const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getMe = catchAsync(async (req: Request, res: Response) => {
     const decodedToken = req.user as JwtPayload
     const result = await UserServices.getMe(decodedToken.userId);
     sendResponse(res, {
@@ -111,7 +111,7 @@ const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction)
         data: result.data
     })
 })
-const getSingleUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+const getSingleUser = catchAsync(async (req: Request, res: Response) => {
     const id = req.params.id;
     const result = await UserServices.getSingleUser(id);
     sendResponse(res, {
@@ -127,8 +127,8 @@ export const UserControllers = {
     getAllAdmin,
     getAllDeletedUsers,
     getAllUnauthorizedUsers,
-    getAllSender,
-    getAllReceiver,
+    getAllTourist,
+    getAllGuide,
     updateUser,
     getMe,
     getSingleUser

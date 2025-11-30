@@ -6,9 +6,23 @@ const authProviderSchema = new Schema<IAuthProvider>({
   providerId: { type: String, required: true }
 }, { _id: false });
 
+const guideProfileSchema = new Schema({
+  expertise: [{ type: String }],
+  dailyRate: { type: Number },
+  languages: [{ type: String }],
+  verified: { type: Boolean, default: false },
+  bio: { type: String },
+  photos: [{ type: String }]
+}, { _id: false });
+
+const touristProfileSchema = new Schema({
+  preferences: [{ type: String }],
+  phone: { type: String }
+}, { _id: false });
+
 const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String },
   phone: { type: String },
   picture: { type: String },
@@ -23,9 +37,11 @@ const userSchema = new Schema<IUser>({
   role: {
     type: String,
     enum: Object.values(Role),
-    default: Role.SENDER
+    default: Role.TOURIST
   },
-  auths: [authProviderSchema]
+  auths: [authProviderSchema],
+  guideProfile: guideProfileSchema,
+  touristProfile: touristProfileSchema
 }, {
   timestamps: true,
   versionKey: false

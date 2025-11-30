@@ -34,7 +34,7 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
   if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
 
   if (payload.role) {
-    if ([Role.SENDER, Role.RECEIVER].includes(decodedToken.role)) {
+    if ([Role.TOURIST, Role.GUIDE].includes(decodedToken.role)) {
       throw new AppError(httpStatus.FORBIDDEN, "Insufficient role");
     }
 
@@ -44,7 +44,7 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
   }
 
   if (payload.isActive || payload.isDeleted || payload.isVerified) {
-    if ([Role.SENDER, Role.RECEIVER].includes(decodedToken.role)) {
+    if ([Role.TOURIST, Role.GUIDE].includes(decodedToken.role)) {
       throw new AppError(httpStatus.FORBIDDEN, "Insufficient role");
     }
   }
@@ -141,23 +141,23 @@ const getAllUnauthorizedUsers = async (query: Record<string, string>) => {
     meta
   }
 };
-const getAllSender = async () => {
-  const users = await User.find({ role: "SENDER" });
-  const totalSender = await User.countDocuments({ role: "SENDER" });
+const getAllTourist = async () => {
+  const users = await User.find({ role: "TOURIST" });
+  const totalTourist = await User.countDocuments({ role: "TOURIST" });
   return {
     data: users,
     meta: {
-      total: totalSender,
+      total: totalTourist,
     },
   };
 };
-const getAllReceiver = async () => {
-  const users = await User.find({ role: "RECEIVER" });
-  const totalReceiver = await User.countDocuments({ role: "RECEIVER" });
+const getAllGuide = async () => {
+  const users = await User.find({ role: "GUIDE" });
+  const totalGuide = await User.countDocuments({ role: "GUIDE" });
   return {
     data: users,
     meta: {
-      total: totalReceiver,
+      total: totalGuide,
     },
   };
 };
@@ -179,8 +179,8 @@ export const UserServices = {
     getAllAdmin,
     getAllDeletedUsers,
     getAllUnauthorizedUsers,
-    getAllSender,
-    getAllReceiver,
+    getAllTourist,
+    getAllGuide,
     updateUser,
     getMe,
     getSingleUser
