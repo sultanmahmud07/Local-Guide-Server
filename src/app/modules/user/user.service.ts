@@ -7,6 +7,7 @@ import { IAuthProvider, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { userSearchableFields } from "./user.constant";
+import { Types } from "mongoose";
 
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
@@ -141,26 +142,6 @@ const getAllUnauthorizedUsers = async (query: Record<string, string>) => {
     meta
   }
 };
-const getAllTourist = async () => {
-  const users = await User.find({ role: "TOURIST" });
-  const totalTourist = await User.countDocuments({ role: "TOURIST" });
-  return {
-    data: users,
-    meta: {
-      total: totalTourist,
-    },
-  };
-};
-const getAllGuide = async () => {
-  const users = await User.find({ role: "GUIDE" });
-  const totalGuide = await User.countDocuments({ role: "GUIDE" });
-  return {
-    data: users,
-    meta: {
-      total: totalGuide,
-    },
-  };
-};
 const getSingleUser = async (id: string) => {
     const user = await User.findById(id).select("-password");
     return {
@@ -173,15 +154,32 @@ const getMe = async (userId: string) => {
         data: user
     }
 };
+const deleteUser = async (
+  targetUserId: string, 
+  authUser: JwtPayload
+) => {
+  const user = await User.findById(targetUserId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Super-admin can delete anyone
+  if (authUser.role === "SUPER_ADMIN" || authUser.role === "ADMIN") {
+    await User.findByIdAndDelete(targetUserId);
+    return { data: targetUserId };
+  }else{
+     throw new Error("Your are not authorized to delete this user.");
+  }
+
+};
 export const UserServices = {
     createUser,
     getAllUsers,
     getAllAdmin,
     getAllDeletedUsers,
     getAllUnauthorizedUsers,
-    getAllTourist,
-    getAllGuide,
     updateUser,
     getMe,
-    getSingleUser
+    getSingleUser,
+    deleteUser
 }

@@ -79,28 +79,6 @@ const getAllUnauthorizedUsers = catchAsync(async (req: Request, res: Response) =
         meta: result.meta
     })
 })
-const getAllTourist = catchAsync(async (req: Request, res: Response) => {
-    const result = await UserServices.getAllTourist();
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.CREATED,
-        message: "All Users Retrieved Successfully",
-        data: result.data,
-        meta: result.meta
-    })
-})
-const getAllGuide = catchAsync(async (req: Request, res: Response) => {
-    const result = await UserServices.getAllGuide();
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.CREATED,
-        message: "All Users Retrieved Successfully",
-        data: result.data,
-        meta: result.meta
-    })
-})
 const getMe = catchAsync(async (req: Request, res: Response) => {
     const decodedToken = req.user as JwtPayload
     const result = await UserServices.getMe(decodedToken.userId);
@@ -121,15 +99,30 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
         data: result.data
     })
 })
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const targetUserId = req.params.id;
+  const authUser = req.user as JwtPayload;
+
+  const result = await UserServices.deleteUser(
+    targetUserId,
+    authUser
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User deleted successfully",
+    data: result.data,
+  });
+});
 export const UserControllers = {
     createUser,
     getAllUsers,
     getAllAdmin,
     getAllDeletedUsers,
     getAllUnauthorizedUsers,
-    getAllTourist,
-    getAllGuide,
     updateUser,
     getMe,
-    getSingleUser
+    getSingleUser,
+    deleteUser
 }

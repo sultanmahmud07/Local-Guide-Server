@@ -34,7 +34,7 @@ const createTour = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateTour = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user as JwtPayload;
+  // const user = req.user as JwtPayload;
 
   const thumbnail = req.files && (req.files as any).thumbnail
     ? (req.files as any).thumbnail[0].path
@@ -52,9 +52,7 @@ const updateTour = catchAsync(async (req: Request, res: Response) => {
 
   const result = await TourService.updateTour(
     req.params.id,
-    payload,
-    user.userId,
-    user.role
+    payload
   );
 
   sendResponse(res, {
