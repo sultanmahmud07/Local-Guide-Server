@@ -4,6 +4,9 @@ import { UserRoutes } from "../modules/user/user.route"
 import { StatsRoutes } from "../modules/stats/stats.route"
 import { ContactRoutes } from "../modules/contact/contact.route"
 import { TourRoutes } from "../modules/tour/tour.route"
+import { BookingRoutes } from "../modules/booking/booking.route"
+import { PaymentRoutes } from "../modules/payment/payment.route"
+import { OtpRoutes } from "../modules/otp/otp.route"
 
 export const router = Router()
 
@@ -19,6 +22,18 @@ const moduleRoutes = [
     {
         path: "/listing",
         route: TourRoutes
+    },
+    {
+        path: "/booking",
+        route: BookingRoutes
+    },
+    {
+        path: "/payment",
+        route: PaymentRoutes
+    },
+    {
+        path: "/otp",
+        route: OtpRoutes
     },
     {
         path: "/stats",

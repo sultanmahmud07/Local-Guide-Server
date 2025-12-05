@@ -1,20 +1,37 @@
-// User - Booking(Pending) -> Payment (Unpaid) -> SSLCommerz -> Booking update = confirm -> Payment update = Paid
-
 import { Types } from "mongoose";
-
+import { PAYMENT_STATUS } from "../payment/payment.interface";
 
 export enum BOOKING_STATUS {
     PENDING = "PENDING",
-    CANCEL = "CANCEL",
-    COMPLETE = "COMPLETE",
-    FAILED = "FAILED"
+    CONFIRMED = "CONFIRMED",
+    DECLINED = "DECLINED",
+    CANCELLED = "CANCELLED",
+    COMPLETED = "COMPLETED"
 }
 
+
 export interface IBooking {
-    user: Types.ObjectId,
-    tour: Types.ObjectId,
+    _id?: Types.ObjectId;
+
+    tour: Types.ObjectId;
+    user: Types.ObjectId;
+    guide: Types.ObjectId;
+
+    date: string; // YYYY-MM-DD
+    time: string; // HH:mm
+    groupSize: number;
+    totalPrice: number;
     payment?: Types.ObjectId,
-    guestCount: number,
-    status: BOOKING_STATUS,
-    createdAt?: Date
+    paymentStatus: PAYMENT_STATUS;
+    status: BOOKING_STATUS;
+
+    notes?: string;
+
+    statusLogs: {
+        status: BOOKING_STATUS;
+        updatedBy: Types.ObjectId;
+        timestamp: Date;
+    }[];
+    createdAt?: Date;
+    updatedAt?: Date;
 }

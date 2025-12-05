@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from "http-status-codes";
 import AppError from "../../errorHelpers/AppError";
-import { getTransactionId } from "../../utils/getTransactionId";
 import { PAYMENT_STATUS } from "../payment/payment.interface";
 import { Payment } from "../payment/payment.model";
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
@@ -10,14 +9,9 @@ import { Tour } from "../tour/tour.model";
 import { User } from "../user/user.model";
 import { BOOKING_STATUS, IBooking } from "./booking.interface";
 import { Booking } from "./booking.model";
+import { getTransactionId } from "../../utils/getTransactionId";
 
 
-
-/**
- * Duplicate DB Collections / replica
- * 
- * Relica DB -> [ Create Booking -> Create Payment ->  Update Booking -> Error] -> Real DB
- */
 
 const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     const transactionId = getTransactionId()
@@ -32,19 +26,33 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             throw new AppError(httpStatus.BAD_REQUEST, "Please Update Your Profile to Book a Tour.")
         }
 
-        const tour = await Tour.findById(payload.tour).select("costFrom")
+        const tour = await Tour.findById(payload.tour).select("fee title").session(session);
 
-        if (!tour?.costFrom) {
-            throw new AppError(httpStatus.BAD_REQUEST, "No Tour Cost Found!")
+        if (!tour?.fee) {
+            throw new AppError(httpStatus.BAD_REQUEST, "No Tour Found with fee!")
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const amount = Number(tour.costFrom) * Number(payload.guestCount!)
+        const feeNumber = Number(tour.fee || 0);
+        if (!Number.isFinite(feeNumber) || feeNumber <= 0) {
+            throw new AppError(httpStatus.BAD_REQUEST, "Invalid tour fee");
+        }
+
+        const groupSize = payload.groupSize ?? 1;
+        const amount = feeNumber * Number(groupSize);
 
         const booking = await Booking.create([{
+            ...payload,
             user: userId,
+            totalPrice:amount,
+            paymentStatus: PAYMENT_STATUS.UNPAID,
             status: BOOKING_STATUS.PENDING,
-            ...payload
+            statusLogs: [
+                {
+                    status: BOOKING_STATUS.PENDING,
+                    updatedBy: userId,
+                    timestamp: new Date(),
+                },
+            ]
         }], { session })
 
         const payment = await Payment.create([{
@@ -61,7 +69,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
                 { new: true, runValidators: true, session }
             )
             .populate("user", "name email phone address")
-            .populate("tour", "title costFrom")
+            .populate("tour", "title fee")
             .populate("payment");
 
         const userAddress = (updatedBooking?.user as any).address
@@ -80,6 +88,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
 
         const sslPayment = await SSLService.sslPaymentInit(sslPayload)
 
+        // eslint-disable-next-line no-console
         console.log(sslPayment);
 
         await session.commitTransaction(); //transaction
@@ -91,14 +100,9 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     } catch (error) {
         await session.abortTransaction(); // rollback
         session.endSession()
-        // throw new AppError(httpStatus.BAD_REQUEST, error) ❌❌
         throw error
     }
 };
-
-// Frontend(localhost:5173) - User - Tour - Booking (Pending) - Payment(Unpaid) -> SSLCommerz Page -> Payment Complete -> Backend(localhost:5000/api/v1/payment/success) -> Update Payment(PAID) & Booking(CONFIRM) -> redirect to frontend -> Frontend(localhost:5173/payment/success)
-
-// Frontend(localhost:5173) - User - Tour - Booking (Pending) - Payment(Unpaid) -> SSLCommerz Page -> Payment Fail / Cancel -> Backend(localhost:5000) -> Update Payment(FAIL / CANCEL) & Booking(FAIL / CANCEL) -> redirect to frontend -> Frontend(localhost:5173/payment/cancel or localhost:5173/payment/fail)
 
 const getUserBookings = async () => {
 

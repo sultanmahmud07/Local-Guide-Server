@@ -4,7 +4,6 @@ import { uploadBufferToCloudinary } from "../../config/cloudinary.config";
 import AppError from "../../errorHelpers/AppError";
 import { generatePdf, IInvoiceData } from "../../utils/invoice";
 import { sendEmail } from "../../utils/sendEmail";
-import { BOOKING_STATUS } from "../booking/booking.interface";
 import { Booking } from "../booking/booking.model";
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
@@ -12,6 +11,7 @@ import { ITour } from "../tour/tour.interface";
 import { IUser } from "../user/user.interface";
 import { PAYMENT_STATUS } from "./payment.interface";
 import { Payment } from "./payment.model";
+import { BOOKING_STATUS } from "../booking/booking.interface";
 
 
 
@@ -68,7 +68,7 @@ const successPayment = async (query: Record<string, string>) => {
         const updatedBooking = await Booking
             .findByIdAndUpdate(
                 updatedPayment?.booking,
-                { status: BOOKING_STATUS.COMPLETE },
+                { status: BOOKING_STATUS.COMPLETED },
                 { new: true, runValidators: true, session }
             )
             .populate("tour", "title")
@@ -80,7 +80,7 @@ const successPayment = async (query: Record<string, string>) => {
 
         const invoiceData: IInvoiceData = {
             bookingDate: updatedBooking.createdAt as Date,
-            guestCount: updatedBooking.guestCount,
+            guestCount: updatedBooking.groupSize,
             totalAmount: updatedPayment.amount,
             tourTitle: (updatedBooking.tour as unknown as ITour).title,
             transactionId: updatedPayment.transactionId,
@@ -99,7 +99,7 @@ const successPayment = async (query: Record<string, string>) => {
 
         await sendEmail({
             to: (updatedBooking.user as unknown as IUser).email,
-            subject: "Your Booking Invoice",
+            subject: "Your Payment Invoice",
             templateName: "invoice",
             templateData: invoiceData,
             attachments: [
@@ -117,7 +117,6 @@ const successPayment = async (query: Record<string, string>) => {
     } catch (error) {
         await session.abortTransaction(); // rollback
         session.endSession()
-        // throw new AppError(httpStatus.BAD_REQUEST, error) ❌❌
         throw error
     }
 };
@@ -139,7 +138,7 @@ const failPayment = async (query: Record<string, string>) => {
         await Booking
             .findByIdAndUpdate(
                 updatedPayment?.booking,
-                { status: BOOKING_STATUS.FAILED },
+                { paymentStatus: PAYMENT_STATUS.FAILED },
                 { runValidators: true, session }
             )
 
@@ -171,7 +170,7 @@ const cancelPayment = async (query: Record<string, string>) => {
         await Booking
             .findByIdAndUpdate(
                 updatedPayment?.booking,
-                { status: BOOKING_STATUS.CANCEL },
+                { paymentStatus: PAYMENT_STATUS.FAILED },
                 { runValidators: true, session }
             )
 
