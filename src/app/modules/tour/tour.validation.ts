@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import z from "zod";
 
 // helper preprocessors
@@ -60,7 +61,7 @@ export const createTourZodSchema = z.object({
     exclusions: z.preprocess(toStringArray, z.array(z.string()).optional()).optional(),
   }).optional(),
 
-  author: z.string({ required_error: "Author ID required" }),
+  author: z.string().optional(),
 
   language: z.enum(["English", "Spanish", "French", "German", "Other"], { required_error: "Language required" }),
 

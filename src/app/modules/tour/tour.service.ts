@@ -1,38 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Tour } from "./tour.model";
 import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status-codes";
-import { Types } from "mongoose";
-import slugify from "slugify";
 import { deleteImageFromCLoudinary } from "../../config/cloudinary.config";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { ITour } from "./tour.interface";
 import { tourSearchableFields } from "./tour.constant";
-/**
- * Helper: generate a unique slug based on title
- */
-async function generateUniqueSlugForModel(model: any, baseTitle: string, slugField = "slug") {
-  const baseSlug = slugify(baseTitle || "", { lower: true, strict: true });
-  if (!baseSlug) {
-    // fallback to timestamp
-    return `${Date.now()}`;
-  }
 
-  let slug = baseSlug;
-  let counter = 1;
-
-  // Loop until an unused slug is found
-  while (await model.exists({ [slugField]: slug })) {
-    slug = `${baseSlug}-${counter++}`;
-  }
-
-  return slug;
-}
-/** --------------------------------------------------
- * CREATE TOUR (Slug must be unique)
- * -------------------------------------------------- */
-const createTour = async (payload: any) => {
-  // 1️⃣ Check slug already exists
-  const exists = await Tour.findOne({ slug: payload.slug });
+const createTour = async (data: Partial<ITour>) => {
+  const exists = await Tour.findOne({ slug: data.slug });
   if (exists) {
     throw new AppError(
       httpStatus.CONFLICT,
@@ -40,7 +16,7 @@ const createTour = async (payload: any) => {
     );
   }
 
-  const tour = await Tour.create(payload);
+  const tour = await Tour.create(data);
   return { data: tour };
 };
 
@@ -116,13 +92,31 @@ const getAllTours = async (query: Record<string, string>) => {
 };
 
 const getSingleTour = async (slug: string) => {
-  const tour = await Tour.findOne({ slug });
+  const tour = await Tour.findOne({ slug })
+    .populate("author", "name email")
+
+     if (!tour) {
+    throw new AppError(httpStatus.NOT_FOUND, "Tour not found with this slug.");
+  }
   return {
     data: tour,
   };
 };
 
+const getToursByGuide = async (guideId: string, query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(Tour.find({ author: guideId }), query);
 
+  const tours = await queryBuilder
+    .search(tourSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .paginate();
+
+  const [data, meta] = await Promise.all([tours.build(), queryBuilder.getMeta()]);
+
+  return { data, meta };
+};
 const deleteTour = async (id: string) => {
   const existingTour = await Tour.findById(id);
   if (!existingTour) {
@@ -142,14 +136,8 @@ const deleteTour = async (id: string) => {
   // Attempt cloudinary deletes (best-effort)
   if (toDelete.length > 0) {
     await Promise.all(
-      toDelete.map(async (url) => {
-        try {
-          await deleteImageFromCLoudinary(url);
-        } catch (err) {
-          // optionally log
-        }
-      })
-    );
+      toDelete.map(async (url) => await deleteImageFromCLoudinary(url)
+    ));
   }
 
   return deleted;
@@ -161,4 +149,5 @@ export const TourService = {
   getSingleTour,
   updateTour,
   deleteTour,
+  getToursByGuide
 };

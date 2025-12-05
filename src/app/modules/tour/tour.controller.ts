@@ -4,25 +4,15 @@ import httpStatus from "http-status-codes";
 import { sendResponse } from "../../utils/sendResponse";
 import { TourService } from "./tour.service";
 import { JwtPayload } from "jsonwebtoken";
+import { ITour } from "./tour.interface";
 
 const createTour = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload;
-
-  const thumbnail = req.files && (req.files as any).thumbnail
-    ? (req.files as any).thumbnail[0].path
-    : undefined;
-
-  const images = req.files && (req.files as any).images
-    ? (req.files as any).images.map((f: any) => f.path)
-    : [];
-
-  const payload = {
+  const payload: ITour = {
     ...req.body,
-    guide: user.userId,
-    thumbnail,
-    images,
+    author: user.userId,
+    images: (req.files as Express.Multer.File[])?.map(file => file.path),
   };
-
   const result = await TourService.createTour(payload);
 
   sendResponse(res, {
@@ -34,36 +24,78 @@ const createTour = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateTour = catchAsync(async (req: Request, res: Response) => {
-  // const user = req.user as JwtPayload;
+    const parsedData = req.body.data ? JSON.parse(req.body.data) : req.body;
+    const tourId = req.params.id
+      const payload = {
+        ...parsedData,
+        images: (req.files as Express.Multer.File[])?.map(file => file.path)
+    }
 
-  const thumbnail = req.files && (req.files as any).thumbnail
-    ? (req.files as any).thumbnail[0].path
-    : undefined;
-
-  const images = req.files && (req.files as any).images
-    ? (req.files as any).images.map((f: any) => f.path)
-    : undefined; // undefined means skip replacing
-
-  const payload = {
-    ...req.body,
-    ...(thumbnail && { thumbnail }),
-    ...(images && { images }),
-  };
-
-  const result = await TourService.updateTour(
-    req.params.id,
-    payload
-  );
+    const tour = await TourService.updateTour(tourId, payload);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: "Tour updated successfully",
-    data: result.data
+    data: tour
   });
 });
 
+const getAllTours = catchAsync(async (req: Request, res: Response) => {
+  const query = req.query;
+  const result = await TourService.getAllTours(query as Record<string, string>);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Tour Retrieved Successfully!",
+    data: result.data,
+    meta: result.meta
+  })
+})
+
+const getTourBySlug = catchAsync(async (req: Request, res: Response) => {
+  const slug = req.params.slug;
+  const result = await TourService.getSingleTour(slug);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Tour retrieved successfully",
+    data: result.data,
+  });
+});
+
+const getToursByGuide = catchAsync(async (req: Request, res: Response) => {
+  const decoded = req.user as JwtPayload;
+  const userId = decoded.userId || decoded._id; // depending on token shape
+  const query = req.query;
+
+  const result = await TourService.getToursByGuide(String(userId), query as Record<string, string>);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Guide tours retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+const deleteTour = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await TourService.deleteTour(id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Tour deleted successfully',
+        data: result,
+    });
+});
 export const TourController = {
   createTour,
-  updateTour
+  updateTour,
+  getAllTours,
+  getTourBySlug,
+  getToursByGuide,
+  deleteTour
 };

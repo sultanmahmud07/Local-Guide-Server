@@ -8,14 +8,19 @@ import { multerUpload } from "../../config/multer.config";
 
 const router = Router();
 
+// Public
+router.get("/", TourController.getAllTours);
+router.get("/:slug", TourController.getTourBySlug);
+
+// Authenticated routes
+router.get("/guide", checkAuth(Role.GUIDE), TourController.getToursByGuide);
+router.patch("/:id", checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN), TourController.updateTour);
+
 // Create Tour (GUIDE, ADMIN)
 router.post(
   "/create",
   checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN),
-  multerUpload.fields([
-    { name: "thumbnail", maxCount: 1 },
-    { name: "images", maxCount: 10 },
-  ]),
+  multerUpload.array("files"),
   validateRequest(createTourZodSchema),
   TourController.createTour
 );
@@ -31,8 +36,8 @@ router.patch(
   TourController.updateTour
 );
 
-// Search + Read
-// router.get("/search", TourController.searchTours);
-// router.get("/:id", TourController.getTourById);
+router.delete("/:id", checkAuth(Role.GUIDE ,Role.ADMIN, Role.SUPER_ADMIN), TourController.deleteTour);
+
+
 
 export const TourRoutes = router;
