@@ -10,6 +10,11 @@ import { User } from "../user/user.model";
 import { BOOKING_STATUS, IBooking } from "./booking.interface";
 import { Booking } from "./booking.model";
 import { getTransactionId } from "../../utils/getTransactionId";
+import { Types } from "mongoose";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { bookingSearchableFields } from "./booking.constant";
+import { JwtPayload } from "jsonwebtoken";
+import { Role } from "../user/user.interface";
 
 
 
@@ -26,7 +31,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
             throw new AppError(httpStatus.BAD_REQUEST, "Please Update Your Profile to Book a Tour.")
         }
 
-        const tour = await Tour.findById(payload.tour).select("fee title").session(session);
+        const tour = await Tour.findById(payload.tour).select("_id fee title").session(session);
 
         if (!tour?.fee) {
             throw new AppError(httpStatus.BAD_REQUEST, "No Tour Found with fee!")
@@ -42,8 +47,10 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
 
         const booking = await Booking.create([{
             ...payload,
-            user: userId,
-            totalPrice:amount,
+            user: user._id,
+            guide: payload.guide,
+            tour: tour._id,
+            totalPrice: amount,
             paymentStatus: PAYMENT_STATUS.UNPAID,
             status: BOOKING_STATUS.PENDING,
             statusLogs: [
@@ -104,31 +111,160 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     }
 };
 
-const getUserBookings = async () => {
+const getBookingById = async (bookingId: string, decodedUser: JwtPayload) => {
+    const booking = await Booking.findById(bookingId)
+        .populate("user", "name email")
+        .populate("tour", "title fee")
+        .populate("guide", "name email")
+        .populate("payment");
 
-    return {}
+    if (!booking) {
+        throw new AppError(404, "Booking not found");
+    }
+
+    const userId = decodedUser._id;
+    const role = decodedUser.role;
+
+    // Authorization rules
+    if (role === "TOURIST" && booking.user.toString() !== userId) {
+        throw new AppError(403, "You are not allowed to view this booking");
+    }
+
+    if (role === "GUIDE" && booking.guide.toString() !== userId) {
+        throw new AppError(403, "You are not allowed to view this booking");
+    }
+
+    return booking;
 };
 
-const getBookingById = async () => {
-    return {}
+// const getAllBookings = async (query: Record<string, string>) => {
+//  const queryBuilder = new QueryBuilder(Booking.find(), query)
+
+//    const bookings = await queryBuilder
+//      .search(bookingSearchableFields)
+//      .filter()
+//      .sort()
+//      .fields()
+//      .paginate()
+
+//    const [data, meta] = await Promise.all([
+//      bookings.build(),
+//      queryBuilder.getMeta()
+//    ])
+//    return {
+//      data,
+//      meta
+//    }
+
+// };
+const getAllBookings = async (decodedToken: JwtPayload, query: Record<string, string>) => {
+    const role = (decodedToken.role as string) || "";
+    const userId = (decodedToken.userId || decodedToken._id) as string;
+
+    let baseQuery;
+
+
+    if (role === Role.ADMIN || role === Role.SUPER_ADMIN) {
+        // admin sees all bookings
+        baseQuery = Booking.find().populate("tour user guide payment");
+    } else if (role === Role.GUIDE) {
+        // guide sees bookings where they are the guide
+        baseQuery = Booking.find({ guide: userId }).populate("tour user guide payment");
+    } else {
+        // default: traveler / tourist sees only their bookings
+        baseQuery = Booking.find({ user: userId }).populate("tour guide payment");
+    }
+
+    const queryBuilder = new QueryBuilder(baseQuery, query);
+    const bookingsQuery = await queryBuilder
+        .search(bookingSearchableFields)
+        .filter()
+        .sort()
+        .fields()
+        .paginate();
+
+    const [data, meta] = await Promise.all([bookingsQuery.build(), queryBuilder.getMeta()]);
+
+    return { data, meta };
+
+
 };
 
 const updateBookingStatus = async (
-
+    bookingId: string,
+    status: BOOKING_STATUS,
+    decodedToken: JwtPayload
 ) => {
+    const role = decodedToken.role;
+    const userId = decodedToken._id;
 
-    return {}
+    const booking = await Booking.findById(bookingId);
+    if (!booking) throw new AppError(404, "Booking not found");
+
+    const isAdmin = role === Role.ADMIN || role === Role.SUPER_ADMIN;
+
+    // -------------------------
+    // GUIDE can confirm/decline
+    // -------------------------
+    if (role === Role.GUIDE) {
+        if (booking.guide.toString() !== userId) {
+            throw new AppError(403, "Not authorized");
+        }
+        if (![BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.DECLINED].includes(status)) {
+            throw new AppError(400, "Guide can only CONFIRM or DECLINE");
+        }
+    }
+
+    // -------------------------
+    // TOURIST can cancel only
+    // -------------------------
+    if (role === Role.TOURIST) {
+        if (booking.user.toString() !== userId) {
+            throw new AppError(403, "Not authorized");
+        }
+        if (status !== BOOKING_STATUS.CANCELLED) {
+            throw new AppError(400, "Tourist can only CANCEL bookings");
+        }
+    }
+
+    // -------------------------
+    // ADMIN can set any status
+    // -------------------------
+    if (!isAdmin && role !== Role.GUIDE && role !== Role.TOURIST) {
+        throw new AppError(403, "Role not allowed");
+    }
+
+    // Update status & log
+    booking.status = status;
+    booking.statusLogs.push({
+        status,
+        updatedBy: userId,
+        timestamp: new Date(),
+    });
+
+    await booking.save();
+
+    return { data: booking };
 };
 
-const getAllBookings = async () => {
+const cancelBooking = async (id: string, travelerId: string) => {
+    const booking = await Booking.findOne({ _id: id, user: travelerId });
+    if (!booking) throw new AppError(httpStatus.NOT_FOUND, "Booking not found");
 
-    return {}
+    booking.status = BOOKING_STATUS.CANCELLED;
+    booking.statusLogs.push({
+        status: BOOKING_STATUS.CANCELLED,
+        updatedBy: new Types.ObjectId(travelerId),
+        timestamp: new Date(),
+    });
+
+    await booking.save();
+    return { data: booking };
 };
-
 export const BookingService = {
     createBooking,
-    getUserBookings,
+    getAllBookings,
     getBookingById,
     updateBookingStatus,
-    getAllBookings,
+    cancelBooking
 };

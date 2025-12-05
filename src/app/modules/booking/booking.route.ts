@@ -15,13 +15,8 @@ router.post("/",
 );
 
 router.get("/",
-    checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-    BookingController.getAllBookings
-);
-
-router.get("/my-bookings",
     checkAuth(...Object.values(Role)),
-    BookingController.getUserBookings
+    BookingController.getAllBookings
 );
 
 router.get("/:bookingId",
@@ -29,10 +24,14 @@ router.get("/:bookingId",
     BookingController.getSingleBooking
 );
 
-router.patch("/:bookingId/status",
+router.patch("/status/:bookingId",
     checkAuth(...Object.values(Role)),
     validateRequest(updateBookingStatusZodSchema),
     BookingController.updateBookingStatus
+);
+router.patch("/cancel/:id",
+    checkAuth(...Object.values(Role)),
+    BookingController.cancelBooking
 );
 
 export const BookingRoutes = router;

@@ -16,53 +16,68 @@ const createBooking = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const getUserBookings = catchAsync(
-    async (req: Request, res: Response) => {
-        const bookings = await BookingService.getUserBookings();
-        sendResponse(res, {
-            statusCode: 200,
-            success: true,
-            message: "Bookings retrieved successfully",
-            data: bookings,
-        });
-    }
-);
-const getSingleBooking = catchAsync(
-    async (req: Request, res: Response) => {
-        const booking = await BookingService.getBookingById();
-        sendResponse(res, {
-            statusCode: 200,
-            success: true,
-            message: "Booking retrieved successfully",
-            data: booking,
-        });
-    }
+const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
+    const { bookingId } = req.params;
+    const decodeToken = req.user as JwtPayload;
+
+    const booking = await BookingService.getBookingById(bookingId, decodeToken);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Booking retrieved successfully",
+        data: booking,
+    });
+});
+
+
+const getAllBookings = catchAsync(async (req: Request, res: Response) => {
+
+    const decodeToken = req.user as JwtPayload;
+    const result = await BookingService.getAllBookings(decodeToken, req.query as Record<string, string>);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Bookings retrieved successfully",
+        data: result.data,
+        meta: result.meta,
+
+    });
+}
 );
 
-const getAllBookings = catchAsync(
-    async (req: Request, res: Response) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const bookings = await BookingService.getAllBookings();
-        sendResponse(res, {
-            statusCode: 200,
-            success: true,
-            message: "Bookings retrieved successfully",
-            data: {},
-            // meta: {},
-        });
-    }
+const cancelBooking = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as JwtPayload;
+
+    const result = await BookingService.cancelBooking(
+        req.params.id,
+        user.userId
+    );
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Bookings Cancel successfully",
+        data: result,
+    });
+}
 );
 
 const updateBookingStatus = catchAsync(
     async (req: Request, res: Response) => {
+        const newStatus = req.body.status;
+        const { bookingId } = req.params;
+        const decodedToken = req.user as JwtPayload;
 
-        const updated = await BookingService.updateBookingStatus(
-        );
+        const result = await BookingService.updateBookingStatus(bookingId, newStatus, decodedToken);
+
+
         sendResponse(res, {
             statusCode: 200,
             success: true,
             message: "Booking Status Updated Successfully",
-            data: updated,
+            data: result,
         });
     }
 );
@@ -72,6 +87,6 @@ export const BookingController = {
     createBooking,
     getAllBookings,
     getSingleBooking,
-    getUserBookings,
     updateBookingStatus,
+    cancelBooking
 }
