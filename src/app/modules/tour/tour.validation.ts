@@ -40,7 +40,7 @@ export const createTourZodSchema = z.object({
   childFee: z.preprocess(toNumber, z.number().nonnegative().optional()),
   durationHours: z.preprocess(toNumber, z.number({ required_error: "Duration required" }).positive("Duration must be > 0")),
 
-  meetingPoint: z.string({ required_error: "Meeting point required" }).min(3),
+  meetingPoint: z.string().optional(),
   maxGroupSize: z.preprocess(toNumber, z.number({ required_error: "Max group size required" }).int().positive("Max group size must be >= 1")),
 
   transportationMode: z.enum([
@@ -63,9 +63,9 @@ export const createTourZodSchema = z.object({
 
   author: z.string().optional(),
 
-  language: z.enum(["English", "Spanish", "French", "German", "Other"], { required_error: "Language required" }),
+  language: z.enum(["English", "Spanish", "French", "German", "Other"]).optional(),
 
-  category: z.enum(["Food", "Art", "Adventure", "History", "Nature", "Other"], { required_error: "Category required" }),
+  category: z.enum(["Food", "Art", "Adventure", "History", "Nature", "Other"]).optional(),
 
   destinationCity: z.string({ required_error: "Destination/City required" }).min(2, "Destination/City is too short"),
 

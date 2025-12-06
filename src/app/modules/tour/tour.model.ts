@@ -1,6 +1,5 @@
-// modules/tour/tour.model.ts
 import { Schema, model } from "mongoose";
-import { ITour, TourCategory, Language, TourStatus, TourTransportationMode } from "./tour.interface";
+import { ITour } from "./tour.interface";
 
 const tourSchema = new Schema<ITour>({
   title: { type: String, required: true, trim: true },
@@ -15,7 +14,7 @@ const tourSchema = new Schema<ITour>({
   childFee: { type: Number, min: 0 },
 
   durationHours: { type: Number, required: true, min: 0 },
-  meetingPoint: { type: String, required: true },
+  meetingPoint: { type: String},
   maxGroupSize: { type: Number, required: true, min: 1 },
 
   transportationMode: {
@@ -41,13 +40,12 @@ const tourSchema = new Schema<ITour>({
   language: {
     type: String,
     enum: ["English", "Spanish", "French", "German", "Other"],
-    required: true,
+    default: "English"
   },
 
   category: {
     type: String,
     enum: ["Food", "Art", "Adventure", "History", "Nature", "Other"],
-    required: true,
   },
 
   destinationCity: { type: String, required: true },
