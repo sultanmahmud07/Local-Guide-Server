@@ -26,7 +26,7 @@ router.post(
 );
 
 router.patch(
-  "/:id",
+  "/update/:id",
   checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN),
   multerUpload.fields([
     { name: "thumbnail", maxCount: 1 },
