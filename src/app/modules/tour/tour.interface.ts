@@ -29,6 +29,7 @@ export interface ITour {
     exclusions: string[];
   };   
   author: Types.ObjectId;
+  reviews?: Types.ObjectId;
   language?: Language;
   category: TourCategory;
   isActive: boolean;

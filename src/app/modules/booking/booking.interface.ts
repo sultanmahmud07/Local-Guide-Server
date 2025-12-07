@@ -24,6 +24,7 @@ export interface IBooking {
     groupSize: number;
     totalPrice: number;
     payment?: Types.ObjectId,
+    review?: Types.ObjectId,
     paymentStatus: PAYMENT_STATUS;
     status: BOOKING_STATUS;
 

@@ -116,17 +116,25 @@ const getBookingById = async (bookingId: string, decodedUser: JwtPayload) => {
         .populate("user", "name email")
         .populate("tour", "title fee")
         .populate("guide", "name email")
-        .populate("payment");
+        .populate("payment")
+        .populate({
+            path: "review",
+            populate: {
+                path: "user",
+                select: "name email"
+            }
+        });
+
 
     if (!booking) {
         throw new AppError(404, "Booking not found");
     }
 
-    const userId = decodedUser._id;
+    const userId = decodedUser.userId;
     const role = decodedUser.role;
 
     // Authorization rules
-    if (role === "TOURIST" && booking.user.toString() !== userId) {
+    if (role === "TOURIST" && booking.user._id.toString() !== userId) {
         throw new AppError(403, "You are not allowed to view this booking");
     }
 
@@ -136,6 +144,8 @@ const getBookingById = async (bookingId: string, decodedUser: JwtPayload) => {
 
     return booking;
 };
+
+
 const getReservedData = async (authorId: string) => {
     const bookings = await Booking.find({ guide: authorId })
         .select("date -_id")
@@ -152,13 +162,13 @@ const getAllBookings = async (decodedToken: JwtPayload, query: Record<string, st
 
     if (role === Role.ADMIN || role === Role.SUPER_ADMIN) {
         // admin sees all bookings
-        baseQuery = Booking.find().populate("tour user guide payment");
+        baseQuery = Booking.find().populate("tour user guide payment review");
     } else if (role === Role.GUIDE) {
         // guide sees bookings where they are the guide
-        baseQuery = Booking.find({ guide: userId }).populate("tour user guide payment");
+        baseQuery = Booking.find({ guide: userId }).populate("tour user guide payment review");
     } else {
         // default: traveler / tourist sees only their bookings
-        baseQuery = Booking.find({ user: userId }).populate("tour guide payment");
+        baseQuery = Booking.find({ user: userId }).populate("tour guide payment review");
     }
 
     const queryBuilder = new QueryBuilder(baseQuery, query);
@@ -182,7 +192,7 @@ const updateBookingStatus = async (
     decodedToken: JwtPayload
 ) => {
     const role = decodedToken.role;
-    const userId = decodedToken._id;
+    const userId = decodedToken.userId;
 
     const booking = await Booking.findById(bookingId);
     if (!booking) throw new AppError(404, "Booking not found");
@@ -193,12 +203,12 @@ const updateBookingStatus = async (
     // GUIDE can confirm/decline
     // -------------------------
     if (role === Role.GUIDE) {
-        if (booking.guide.toString() !== userId) {
+        if (booking.guide?._id.toString() !== userId) {
             throw new AppError(403, "Not authorized");
         }
-        if (![BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.DECLINED].includes(status)) {
-            throw new AppError(400, "Guide can only CONFIRM or DECLINE");
-        }
+        // if (![BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.DECLINED].includes(status)) {
+        //     throw new AppError(400, "Guide can only CONFIRM or DECLINE");
+        // }
     }
 
     // -------------------------

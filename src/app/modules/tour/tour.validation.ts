@@ -62,6 +62,7 @@ export const createTourZodSchema = z.object({
   }).optional(),
 
   author: z.string().optional(),
+  reviews: z.string().optional(),
 
   language: z.enum(["English", "Spanish", "French", "German", "Other"]).optional(),
 
