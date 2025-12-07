@@ -74,7 +74,7 @@ const updateTour = async (id: string, payload: Partial<ITour> ) => {
   return { data: updatedTour };
 };
 const getAllTours = async (query: Record<string, string>) => {
-  const queryBuilder = new QueryBuilder(Tour.find(), query);
+  const queryBuilder = new QueryBuilder(Tour.find().populate("author"), query);
 
   const tours = await queryBuilder
     .search(tourSearchableFields)

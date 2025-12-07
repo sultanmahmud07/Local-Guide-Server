@@ -46,6 +46,19 @@ const getAllBookings = catchAsync(async (req: Request, res: Response) => {
     });
 }
 );
+const getReservedData = catchAsync(async (req: Request, res: Response) => {
+const authorId = req.params.authorId
+    const result = await BookingService.getReservedData(authorId)
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Reserved data retrieved successfully",
+        data: { data: result }
+
+    });
+}
+);
 
 const cancelBooking = catchAsync(async (req: Request, res: Response) => {
     const user = req.user as JwtPayload;
@@ -88,5 +101,6 @@ export const BookingController = {
     getAllBookings,
     getSingleBooking,
     updateBookingStatus,
+    getReservedData,
     cancelBooking
 }

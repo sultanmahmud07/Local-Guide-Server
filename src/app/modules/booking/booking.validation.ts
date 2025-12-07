@@ -28,6 +28,8 @@ export const createBookingZodSchema = z.object({
       }
       return v ?? 1;
     }),
+  phone: z.string().min(1, { message: "Number is required" }),
+  address: z.string().min(1, { message: "Address is required" }),
   notes: z.string().optional().nullable(),
 });
 

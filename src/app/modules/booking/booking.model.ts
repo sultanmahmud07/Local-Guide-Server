@@ -11,8 +11,10 @@ const bookingSchema = new Schema<IBooking>(
         date: { type: String, required: true },
         time: { type: String, required: true },
         groupSize: { type: Number, required: true },
+        phone: { type: String, required: true },
         totalPrice: { type: Number, required: true },
 
+        address: { type: String, required: true },
         notes: { type: String },
         payment: { type: Schema.Types.ObjectId, ref: "Payment" },
         paymentStatus: {

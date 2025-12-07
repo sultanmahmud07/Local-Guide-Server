@@ -30,7 +30,7 @@ router.patch(
   checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN),
   multerUpload.fields([
     { name: "thumbnail", maxCount: 1 },
-    { name: "images", maxCount: 10 },
+    { name: "files", maxCount: 10 },
   ]),
   validateRequest(updateTourZodSchema),
   TourController.updateTour

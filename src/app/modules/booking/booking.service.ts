@@ -27,7 +27,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
     try {
         const user = await User.findById(userId);
 
-        if (!user?.phone || !user.address) {
+        if (!payload?.phone || !payload.address) {
             throw new AppError(httpStatus.BAD_REQUEST, "Please Update Your Profile to Book a Tour.")
         }
 
@@ -47,7 +47,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
 
         const booking = await Booking.create([{
             ...payload,
-            user: user._id,
+            user: user?._id,
             guide: payload.guide,
             tour: tour._id,
             totalPrice: amount,
@@ -136,27 +136,13 @@ const getBookingById = async (bookingId: string, decodedUser: JwtPayload) => {
 
     return booking;
 };
-
-// const getAllBookings = async (query: Record<string, string>) => {
-//  const queryBuilder = new QueryBuilder(Booking.find(), query)
-
-//    const bookings = await queryBuilder
-//      .search(bookingSearchableFields)
-//      .filter()
-//      .sort()
-//      .fields()
-//      .paginate()
-
-//    const [data, meta] = await Promise.all([
-//      bookings.build(),
-//      queryBuilder.getMeta()
-//    ])
-//    return {
-//      data,
-//      meta
-//    }
-
-// };
+const getReservedData = async (authorId: string) => {
+    const bookings = await Booking.find({ guide: authorId })
+        .select("date -_id")
+        .lean();
+    const result = bookings.map((b: any) => b.date);
+    return result
+};
 const getAllBookings = async (decodedToken: JwtPayload, query: Record<string, string>) => {
     const role = (decodedToken.role as string) || "";
     const userId = (decodedToken.userId || decodedToken._id) as string;
@@ -266,5 +252,6 @@ export const BookingService = {
     getAllBookings,
     getBookingById,
     updateBookingStatus,
+    getReservedData,
     cancelBooking
 };

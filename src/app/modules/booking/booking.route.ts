@@ -18,6 +18,9 @@ router.get("/",
     checkAuth(...Object.values(Role)),
     BookingController.getAllBookings
 );
+router.get("/reserved/:authorId",
+    BookingController.getReservedData
+);
 
 router.get("/:bookingId",
     checkAuth(...Object.values(Role)),
