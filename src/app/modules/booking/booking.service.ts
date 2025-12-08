@@ -117,7 +117,8 @@ const getBookingById = async (bookingId: string, decodedUser: JwtPayload) => {
         .populate("tour", "title fee")
         .populate("guide", "name email")
         .populate("payment")
-        .populate("review")
+        .populate("review");
+
 
 
     if (!booking) {

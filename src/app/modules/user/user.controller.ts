@@ -5,6 +5,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { UserServices } from "./user.service";
+import { IUser } from "./user.interface";
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
     const user = await UserServices.createUser(req.body)
@@ -18,10 +19,12 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 })
 
 const updateUser = catchAsync(async (req: Request, res: Response) => {
-    const userId = req.params.id;
     const verifiedToken = req.user;
-    const payload = req.body;
-    const user = await UserServices.updateUser(userId, payload, verifiedToken as JwtPayload)
+    const payload: IUser = {
+        ...req.body,
+        picture: req.file?.path
+    }
+    const user = await UserServices.updateUser(payload, verifiedToken as JwtPayload)
 
     sendResponse(res, {
         success: true,
@@ -100,20 +103,20 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
     })
 })
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
-  const targetUserId = req.params.id;
-  const authUser = req.user as JwtPayload;
+    const targetUserId = req.params.id;
+    const authUser = req.user as JwtPayload;
 
-  const result = await UserServices.deleteUser(
-    targetUserId,
-    authUser
-  );
+    const result = await UserServices.deleteUser(
+        targetUserId,
+        authUser
+    );
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "User deleted successfully",
-    data: result.data,
-  });
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User deleted successfully",
+        data: result.data,
+    });
 });
 export const UserControllers = {
     createUser,

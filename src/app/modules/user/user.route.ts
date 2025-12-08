@@ -4,6 +4,7 @@ import { validateRequest } from "../../middlewares/validateRequest";
 import { UserControllers } from "./user.controller";
 import { Role } from "./user.interface";
 import { createUserZodSchema, updateUserZodSchema } from "./user.validation";
+import { multerUpload } from "../../config/multer.config";
 
 const router = Router()
 
@@ -19,6 +20,10 @@ router.get("/deleted-users", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserContro
 router.get("/unauthorized-users", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserControllers.getAllUnauthorizedUsers)
 router.get("/me", checkAuth(...Object.values(Role)), UserControllers.getMe)
 router.get("/:id", checkAuth(...Object.values(Role)), UserControllers.getSingleUser)
-router.patch("/:id", validateRequest(updateUserZodSchema), checkAuth(...Object.values(Role)), UserControllers.updateUser)
+router.patch("/profile",
+  checkAuth(...Object.values(Role)),
+  multerUpload.single("file"),
+  validateRequest(updateUserZodSchema),
+  UserControllers.updateUser)
 
 export const UserRoutes = router

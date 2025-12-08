@@ -7,7 +7,6 @@ import { IAuthProvider, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { userSearchableFields } from "./user.constant";
-import { Types } from "mongoose";
 
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
@@ -30,8 +29,8 @@ const createUser = async (payload: Partial<IUser>) => {
   return user;
 };
 
-const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken: JwtPayload) => {
-  const user = await User.findById(userId);
+const updateUser = async (payload: Partial<IUser>, decodedToken: JwtPayload) => {
+  const user = await User.findById(decodedToken.userId);
   if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
 
   if (payload.role) {
@@ -54,7 +53,7 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
     payload.password = await bcryptjs.hash(payload.password, Number(envVars.BCRYPT_SALT_ROUND));
   }
 
-  const updatedUser = await User.findByIdAndUpdate(userId, payload, {
+  const updatedUser = await User.findByIdAndUpdate(decodedToken.userId, payload, {
     new: true,
     runValidators: true
   });
