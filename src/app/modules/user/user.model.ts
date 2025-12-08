@@ -26,7 +26,12 @@ const userSchema = new Schema<IUser>({
   password: { type: String },
   phone: { type: String },
   picture: { type: String },
+  languages: [{ type: String }],
+  state: { type: String },
   address: { type: String },
+  bio: { type: String },
+  review_count: { type: Number, default: 0 },
+  ava_rating: { type: Number },
   isDeleted: { type: Boolean, default: false },
   isActive: {
     type: String,
@@ -34,6 +39,7 @@ const userSchema = new Schema<IUser>({
     default: IsActive.ACTIVE
   },
   isVerified: { type: Boolean, default: false },
+  isFeatured: { type: Boolean, default: false },
   role: {
     type: String,
     enum: Object.values(Role),
@@ -41,7 +47,9 @@ const userSchema = new Schema<IUser>({
   },
   auths: [authProviderSchema],
   guideProfile: guideProfileSchema,
-  touristProfile: touristProfileSchema
+  touristProfile: touristProfileSchema,
+
+  // reviews: { type: Schema.Types.ObjectId, ref: "Review"},
 }, {
   timestamps: true,
   versionKey: false

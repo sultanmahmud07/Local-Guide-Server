@@ -20,6 +20,8 @@ router.get("/deleted-users", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserContro
 router.get("/unauthorized-users", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserControllers.getAllUnauthorizedUsers)
 router.get("/me", checkAuth(...Object.values(Role)), UserControllers.getMe)
 router.get("/:id", checkAuth(...Object.values(Role)), UserControllers.getSingleUser)
+router.get("/guide/featured", UserControllers.getFeaturedGuide)
+router.get("/guide/:id", UserControllers.getGuideDetails)
 router.patch("/profile",
   checkAuth(...Object.values(Role)),
   multerUpload.single("file"),

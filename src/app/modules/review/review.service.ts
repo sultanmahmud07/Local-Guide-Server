@@ -122,7 +122,7 @@ export const ReviewService = {
   // Get reviews for a guide
   async getReviewsByGuide(guideId: string, query: Record<string, string>) {
     const baseQuery = Review.find({ guide: guideId })
-      .populate("user", "name")
+      .populate("user", "name picture email")
       .populate("tour", "title");
 
     const queryBuilder = new QueryBuilder(baseQuery, query);

@@ -21,15 +21,12 @@ export interface IAuthProvider {
 export interface IGuideProfile {
   expertise?: string[];       // e.g. ["History", "Food"]
   dailyRate?: number;         // price per booking/day
-  languages?: string[];       // e.g. ["English", "Spanish"]
-  verified?: boolean;         // admin-verified guide
-  bio?: string;
-  photos?: string[];          // urls
+  languages?: string[];       // urls
 }
 
 export interface ITouristProfile {
   preferences?: string[];     // travel interests
-  phone?: string;
+  state?: string;
 }
 
 export interface IUser {
@@ -39,12 +36,19 @@ export interface IUser {
   password?: string;
   phone?: string;
   picture?: string;
+  ava_rating?: string;
+  review_count?: string;
+  bio?: string;
+  state?: string;
   address?: string;
+  languages?: string[];
   isDeleted?: boolean;
   isActive?: IsActive;
   isVerified?: boolean;         // email verified
+  isFeatured?: boolean;         // email verified
   role: Role;
   auths: IAuthProvider[];
+  reviews?: Types.ObjectId,
   guideProfile?: IGuideProfile;
   touristProfile?: ITouristProfile;
   createdAt?: Date;

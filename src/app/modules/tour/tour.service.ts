@@ -6,6 +6,8 @@ import { deleteImageFromCLoudinary } from "../../config/cloudinary.config";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { ITour } from "./tour.interface";
 import { tourSearchableFields } from "./tour.constant";
+import { Review } from "../review/review.model";
+import mongoose from "mongoose";
 
 const createTour = async (data: Partial<ITour>) => {
   const exists = await Tour.findOne({ slug: data.slug });
@@ -73,20 +75,105 @@ const updateTour = async (id: string, payload: Partial<ITour> ) => {
   }
   return { data: updatedTour };
 };
+// const getAllTours = async (query: Record<string, string>) => {
+//   const queryBuilder = new QueryBuilder(Tour.find().populate("author"), query);
+
+//   const tours = await queryBuilder
+//     .search(tourSearchableFields)
+//     .filter()
+//     .sort()
+//     .fields()
+//     .paginate();
+
+//   const [data, meta] = await Promise.all([tours.build(), queryBuilder.getMeta()]);
+
+//   return {
+//     data,
+//     meta
+//   };
+// };
+// Assuming Tour, User, and Review models are imported
+
 const getAllTours = async (query: Record<string, string>) => {
+  
+  // 1. Initial Find and Pagination
+  // Populate the author data first to get the guide IDs
   const queryBuilder = new QueryBuilder(Tour.find().populate("author"), query);
 
-  const tours = await queryBuilder
+  const toursQuery = await queryBuilder
     .search(tourSearchableFields)
     .filter()
     .sort()
     .fields()
     .paginate();
 
-  const [data, meta] = await Promise.all([tours.build(), queryBuilder.getMeta()]);
+  const [tours, meta] = await Promise.all([toursQuery.build(), queryBuilder.getMeta()]);
+
+  // 2. Extract unique Author IDs from the fetched tours
+  const authorIds = [
+    ...new Set(
+      tours
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map(tour => (tour.author as any)?._id?.toString())
+        .filter(id => id) // Filter out null/undefined/unpopulated authors
+    )
+  ];
+
+  // If no tours or no authors found, return early
+  if (authorIds.length === 0) {
+    return { data: tours, meta };
+  }
+
+  // 3. Aggregate Review Data for the fetched Authors
+  // Note: This requires the Review model to be imported.
+  const reviewStats = await Review.aggregate([
+    // Filter reviews only for the authors currently present in the tours
+    { $match: { guide: { $in: authorIds.map(id => new mongoose.Types.ObjectId(id)) } } },
+    
+    // Group by guide ID to calculate statistics
+    {
+      $group: {
+        _id: "$guide", // Group by the guide ID in the Review document
+        review_count: { $sum: 1 }, // Count the number of reviews
+        avg_rating: { $avg: "$rating" }, // Calculate the average rating
+      }
+    },
+    // Project to format the output
+    {
+        $project: {
+            _id: 0,
+            guideId: "$_id",
+            review_count: 1,
+            avg_rating: { $round: ["$avg_rating", 2] } // Round to 2 decimal places
+        }
+    }
+  ]);
+  
+  // 4. Merge Review Stats back into Author Data within the Tour object
+  const statsMap = new Map(reviewStats.map(stat => [stat.guideId.toString(), stat]));
+
+  const dataWithStats = tours.map(tour => {
+    const tourObj = tour.toObject ? tour.toObject() : tour; // Convert Mongoose document to plain object
+    const author = tourObj.author;
+
+    if (author && author._id) {
+      const stats = statsMap.get(author._id.toString());
+      
+      // Merge stats into the author object
+      tourObj.author = {
+        ...author,
+        review_count: stats ? stats.review_count : 0,
+        avg_rating: stats ? stats.avg_rating : 0.0,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+    }
+
+    return tourObj;
+  });
+
 
   return {
-    data,
+    data: dataWithStats,
     meta
   };
 };

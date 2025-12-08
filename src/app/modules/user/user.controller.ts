@@ -58,6 +58,18 @@ const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
         meta: result.meta
     })
 })
+const getFeaturedGuide = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const result = await UserServices.getFeaturedGuide(query as Record<string, string>);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "All Admin Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    })
+})
 const getAllDeletedUsers = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     const result = await UserServices.getAllDeletedUsers(query as Record<string, string>);
@@ -102,6 +114,16 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
         data: result.data
     })
 })
+const getGuideDetails = catchAsync(async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const result = await UserServices.getGuideDetails(id);
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "Guide Retrieved Successfully",
+        data: result.data
+    })
+})
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
     const targetUserId = req.params.id;
     const authUser = req.user as JwtPayload;
@@ -127,5 +149,7 @@ export const UserControllers = {
     updateUser,
     getMe,
     getSingleUser,
+    getGuideDetails,
+    getFeaturedGuide,
     deleteUser
 }
