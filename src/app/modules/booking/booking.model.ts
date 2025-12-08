@@ -15,9 +15,10 @@ const bookingSchema = new Schema<IBooking>(
         totalPrice: { type: Number, required: true },
 
         address: { type: String, required: true },
+        paymentUrl: { type: String},
         notes: { type: String },
         payment: { type: Schema.Types.ObjectId, ref: "Payment" },
-        review: { type: Schema.Types.ObjectId, ref: "Review" },
+        review: { type: Schema.Types.ObjectId, ref: "Review"},
         paymentStatus: {
             type: String,
             enum: PAYMENT_STATUS,

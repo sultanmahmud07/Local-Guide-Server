@@ -21,6 +21,7 @@ export interface IBooking {
     time: string; // HH:mm
     phone: string; 
     address: string; 
+    paymentUrl?: string; 
     groupSize: number;
     totalPrice: number;
     payment?: Types.ObjectId,

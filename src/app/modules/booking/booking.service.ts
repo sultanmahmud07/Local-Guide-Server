@@ -117,13 +117,7 @@ const getBookingById = async (bookingId: string, decodedUser: JwtPayload) => {
         .populate("tour", "title fee")
         .populate("guide", "name email")
         .populate("payment")
-        .populate({
-            path: "review",
-            populate: {
-                path: "user",
-                select: "name email"
-            }
-        });
+        .populate("review")
 
 
     if (!booking) {

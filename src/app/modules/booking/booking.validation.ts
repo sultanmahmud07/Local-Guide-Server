@@ -30,6 +30,7 @@ export const createBookingZodSchema = z.object({
     }),
   phone: z.string().min(1, { message: "Number is required" }),
   address: z.string().min(1, { message: "Address is required" }),
+  paymentUrl: z.string().optional(),
   notes: z.string().optional().nullable(),
 });
 
