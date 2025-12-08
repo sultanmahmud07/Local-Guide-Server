@@ -11,6 +11,7 @@ import { ITour } from "../tour/tour.interface";
 import { IUser } from "../user/user.interface";
 import { PAYMENT_STATUS } from "./payment.interface";
 import { Payment } from "./payment.model";
+import { BOOKING_STATUS } from "../booking/booking.interface";
 
 
 const initPayment = async (bookingId: string) => {
@@ -61,7 +62,7 @@ const successPayment = async (query: Record<string, string>) => {
         const updatedBooking = await Booking
             .findByIdAndUpdate(
                 updatedPayment?.booking,
-                { paymentStatus: PAYMENT_STATUS.PAID },
+                { paymentStatus: PAYMENT_STATUS.PAID, status: BOOKING_STATUS.COMPLETED },
                 { new: true, runValidators: true, session }
             )
             .populate("tour", "title")
