@@ -19,8 +19,9 @@ router.get("/all-admin", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserController
 router.get("/deleted-users", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserControllers.getAllDeletedUsers)
 router.get("/unauthorized-users", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserControllers.getAllUnauthorizedUsers)
 router.get("/me", checkAuth(...Object.values(Role)), UserControllers.getMe)
-router.get("/:id", checkAuth(...Object.values(Role)), UserControllers.getSingleUser)
+router.get("/:id", UserControllers.getSingleUser)
 router.get("/guide/featured", UserControllers.getFeaturedGuide)
+router.get("/tourist/featured", UserControllers.getFeaturedTourist)
 router.get("/guide/search", UserControllers.getSearchGuide)
 router.get("/guide/:id", UserControllers.getGuideDetails)
 router.patch("/profile",

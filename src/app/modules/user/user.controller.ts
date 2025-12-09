@@ -70,6 +70,18 @@ const getFeaturedGuide = catchAsync(async (req: Request, res: Response) => {
         meta: result.meta
     })
 })
+const getFeaturedTourist = catchAsync(async (req: Request, res: Response) => {
+    const query = req.query;
+    const result = await UserServices.getFeaturedTourist(query as Record<string, string>);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "Tourist Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    })
+})
 const getSearchGuide = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
     const result = await UserServices.getSearchGuide(query as Record<string, string>);
@@ -164,5 +176,6 @@ export const UserControllers = {
     getGuideDetails,
     getFeaturedGuide,
     getSearchGuide,
+    getFeaturedTourist,
     deleteUser
 }

@@ -34,6 +34,20 @@ export const ReviewController = {
                   meta: result.meta,
             });
       }),
+      getAllReviews: catchAsync(async (req, res) => {
+            const query = req.query;
+            const result = await ReviewService.getAllReviews(
+                  query as Record<string, string>
+            );
+
+            sendResponse(res, {
+                  success: true,
+                  statusCode: httpStatus.OK,
+                  message: "Reviews all retrieved successfully",
+                  data: result.data,
+                  meta: result.meta,
+            });
+      }),
 
       getReviewsByGuide: catchAsync(async (req, res) => {
             const query = req.query;
@@ -46,6 +60,21 @@ export const ReviewController = {
                   success: true,
                   statusCode: httpStatus.OK,
                   message: "Guide reviews retrieved successfully",
+                  data: result.data,
+                  meta: result.meta,
+            });
+      }),
+      getReviewsByTourist: catchAsync(async (req, res) => {
+            const query = req.query;
+            const result = await ReviewService.getReviewsByTourist(
+                  req.params.touristId,
+                  query as Record<string, string>
+            );
+
+            sendResponse(res, {
+                  success: true,
+                  statusCode: httpStatus.OK,
+                  message: "Tourist reviews retrieved successfully",
                   data: result.data,
                   meta: result.meta,
             });

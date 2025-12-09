@@ -7,6 +7,8 @@ import { Role } from "../user/user.interface";
 
 const router = express.Router();
 
+router.get( "/", 
+  ReviewController.getAllReviews);
 router.post(
   "/create",
   checkAuth(Role.TOURIST),
@@ -16,6 +18,7 @@ router.post(
 
 router.get("/tour/:tourId", ReviewController.getReviewsByTour);
 router.get("/guide/:guideId", ReviewController.getReviewsByGuide);
+router.get("/tourist/:touristId", ReviewController.getReviewsByTourist);
 
 router.get(
   "/me",

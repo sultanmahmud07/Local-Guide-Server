@@ -118,12 +118,46 @@ export const ReviewService = {
 
     return { data, meta };
   },
+  async getAllReviews(query: Record<string, string>) {
+    const baseQuery = Review.find()
+      .populate("tour")
+      .populate("user", "name email picture")
+      .populate("guide", "name email picture");
+
+    const queryBuilder = new QueryBuilder(baseQuery, query);
+
+    const reviewsQuery = await queryBuilder.search(["comment"]).filter().sort().paginate();
+
+    const [data, meta] = await Promise.all([
+      reviewsQuery.build(),
+      queryBuilder.getMeta(),
+    ]);
+
+    return { data, meta };
+  },
 
   // Get reviews for a guide
   async getReviewsByGuide(guideId: string, query: Record<string, string>) {
     const baseQuery = Review.find({ guide: guideId })
       .populate("user", "name picture email")
       .populate("tour", "title");
+
+    const queryBuilder = new QueryBuilder(baseQuery, query);
+
+    const reviewsQuery = await queryBuilder.search(["comment"]).filter().sort().paginate();
+
+    const [data, meta] = await Promise.all([
+      reviewsQuery.build(),
+      queryBuilder.getMeta(),
+    ]);
+
+    return { data, meta };
+  },
+  async getReviewsByTourist(id: string, query: Record<string, string>) {
+    const baseQuery = Review.find({ user: id })
+      .populate("user", "name picture email")
+      .populate("guide", "name picture email")
+      .populate("tour", "title slug description images fee");
 
     const queryBuilder = new QueryBuilder(baseQuery, query);
 
@@ -157,8 +191,9 @@ export const ReviewService = {
   // Get logged-in user's reviews
   async getMyReviews(userId: string, query: Record<string, string>) {
     const baseQuery = Review.find({ user: userId })
-      .populate("tour", "title")
-      .populate("guide", "name");
+      .populate("tour")
+      .populate("user", "name email")
+      .populate("guide", "name email picture");
 
     const queryBuilder = new QueryBuilder(baseQuery, query);
 
