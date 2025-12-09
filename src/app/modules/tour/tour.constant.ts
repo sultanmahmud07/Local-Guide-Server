@@ -1,10 +1,10 @@
 export const tourSearchableFields = [
   "title",
   "description",
-  "itinerary",
-  "destinationCity",
-  "category",
-  "language"
+  // "itinerary",
+  // "destinationCity",
+  // "category",
+  // "language"
 ];
 
 export const tourCategories = ["Food", "Art", "Adventure", "History", "Nature", "Other"] as const;

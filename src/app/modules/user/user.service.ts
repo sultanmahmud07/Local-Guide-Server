@@ -172,6 +172,73 @@ const getFeaturedGuide = async (query: Record<string, string>) => {
     meta
   };
 };
+const getSearchGuide = async (query: Record<string, string>) => {
+
+  // 1. Initial Find and Pagination (using existing QueryBuilder)
+  const initialQuery = { role: "GUIDE" }; // Base query for guides
+
+  const queryBuilder = new QueryBuilder(User.find(initialQuery), query);
+
+  const usersQuery = await queryBuilder
+    .search(userSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .paginate(); // Paginate and filter before aggregation
+
+  const [guides, meta] = await Promise.all([
+    usersQuery.build(), // Execute the find query to get the guides
+    queryBuilder.getMeta() // Get pagination metadata
+  ]);
+
+  // 2. Extract Guide IDs
+  const guideIds = guides.map(guide => guide._id);
+
+  // 3. Aggregate Review Data for the fetched Guides
+  // Note: This requires the Review model to be imported.
+  const reviewStats = await Review.aggregate([
+    // Filter reviews only for the guides currently on the page
+    { $match: { guide: { $in: guideIds } } },
+
+    // Group by guide ID to calculate statistics
+    {
+      $group: {
+        _id: "$guide", // Group by the guide ID in the Review document
+        review_count: { $sum: 1 }, // Count the number of reviews
+        avg_rating: { $avg: "$rating" }, // Calculate the average rating
+      }
+    },
+    // Project to format the output (optional, but good practice)
+    {
+      $project: {
+        _id: 0,
+        guideId: "$_id",
+        review_count: 1,
+        avg_rating: { $round: ["$avg_rating", 2] } // Round to 2 decimal places
+      }
+    }
+  ]);
+
+  // 4. Merge Review Stats back into Guide Data
+  const statsMap = new Map(reviewStats.map(stat => [stat.guideId.toString(), stat]));
+
+  const dataWithStats = guides.map(guide => {
+    const guideObj = guide.toObject ? guide.toObject() : guide; // Convert Mongoose document to plain object
+    const stats = statsMap.get(guideObj._id.toString());
+
+    return {
+      ...guideObj,
+      review_count: stats ? stats.review_count : 0,
+      avg_rating: stats ? stats.avg_rating : 0.0, // Default to 0.0 if no reviews exist
+    };
+  });
+
+
+  return {
+    data: dataWithStats,
+    meta
+  };
+};
 const getAllDeletedUsers = async (query: Record<string, string>) => {
 
   const queryBuilder = new QueryBuilder(User.find({ isDeleted: true }), query)
@@ -318,5 +385,6 @@ export const UserServices = {
   getSingleUser,
   getGuideDetails,
   getFeaturedGuide,
+  getSearchGuide,
   deleteUser
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Tour } from "./tour.model";
 import AppError from "../../errorHelpers/AppError";
@@ -178,6 +179,211 @@ const getAllTours = async (query: Record<string, string>) => {
   };
 };
 
+const getSearchTours = async (query: Record<string, string>) => {
+
+  // --- 1. Pagination and Sorting Initialization ---
+  const page = Math.max(1, Number(query?.page || query.p || 1));
+  const limit = Math.max(1, Number(query?.limit || query.size || 10));
+  const skip = (page - 1) * limit;
+
+  // Sorting
+  let sortObj: any = { createdAt: -1 };
+  if (query.sort) {
+    const s = String(query.sort).trim();
+    if (s.startsWith("-")) sortObj = { [s.slice(1)]: -1 };
+    else if (s.startsWith("+")) sortObj = { [s.slice(1)]: 1 };
+    else sortObj = { [s]: 1 };
+  } else if (query.sortBy) {
+    const order = (query.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
+    sortObj = { [query.sortBy]: order };
+  }
+
+  // Fields projection (optional)
+  let projection: any = null;
+  if (query.fields) {
+    const fields = String(query.fields)
+      .split(",")
+      .map(f => f.trim())
+      .filter(Boolean);
+    if (fields.length) {
+      projection = fields.join(" ");
+    }
+  }
+
+  // --- 2. Build Mongoose Filters (The 'where' clause) ---
+  const filters: any = {};
+
+  // SEARCH: split terms and require each term to match at least one searchable field
+  if (query.search) {
+    const raw = String(query.search).trim();
+    if (raw.length > 0) {
+      const terms = raw.split(/\s+/).map(t => t.trim()).filter(Boolean);
+      
+      filters.$and = terms.map(term => {
+        const ors = tourSearchableFields.map(field => {
+          const obj: any = {};
+          // Case-insensitive regex for partial match
+          obj[field] = { $regex: term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+          return obj;
+        });
+        return { $or: ors };
+      });
+    }
+  }
+
+  // PRICE RANGE: expects "min-max" or single "min"
+  if (query.priceRange || query.price) {
+    const range = String(query.priceRange || query.price).trim();
+    if (range) {
+      const [minRaw, maxRaw] = range.split("-").map(s => s.trim());
+      const priceFilter: any = {};
+      if (minRaw !== "" && !Number.isNaN(Number(minRaw))) priceFilter.$gte = Number(minRaw);
+      if (maxRaw !== undefined && maxRaw !== "" && !Number.isNaN(Number(maxRaw))) priceFilter.$lte = Number(maxRaw);
+      
+      // if "50" provided without dash, treat as min
+      if (!range.includes("-") && !Number.isNaN(Number(range))) {
+        priceFilter.$gte = Number(range);
+      }
+      
+      if (Object.keys(priceFilter).length > 0) {
+        filters.fee = priceFilter;
+      }
+    }
+  }
+
+  // CATEGORY: Case-insensitive, flexible match (Corrected)
+  if (query.category) {
+    const categoryValue = String(query.category).trim();
+    if (categoryValue) {
+      // If category is a string field, use regex for case-insensitive partial match
+      filters.category = { $regex: categoryValue, $options: "i" };
+    }
+  }
+
+  // LANGUAGE: Case-insensitive, flexible match (Corrected)
+  if (query.language) {
+    const languageValue = String(query.language).trim();
+    if (languageValue) {
+      // Assuming tour.language is a string field like "English" or the primary language
+      filters.language = { $regex: languageValue, $options: "i" };
+      
+      // NOTE: If you wanted to search the Guide's languages (which is an array), 
+      // you would need to use aggregation here, but since this is Tour.find(),
+      // we assume we are searching the Tour's language field.
+    }
+  }
+
+  // status/isActive filter
+  if (query.status) {
+    filters.status = String(query.status).trim();
+  }
+  if (query.isActive) {
+    filters.isActive = String(query.isActive).toLowerCase() === "true";
+  }
+
+  // --- 3. Execute Query and Count ---
+  
+  // Build initial query
+  const baseQuery = Tour.find(filters);
+
+  if (projection) baseQuery.select(projection);
+
+  // populate author so we can merge review stats later
+  baseQuery.populate("author");
+
+  // apply sort, skip, limit
+  baseQuery.sort(sortObj).skip(skip).limit(limit);
+
+  // execute results and count in parallel
+  const [docs, total] = await Promise.all([
+    baseQuery.exec(),
+    Tour.countDocuments(filters).exec() // Count total documents matching filters
+  ]);
+
+  // --- 4. Prepare Meta Data ---
+  const totalPages = Math.ceil(total / limit) || 1;
+  const meta = {
+    total,
+    page,
+    limit,
+    totalPages
+  };
+
+  // If no docs, return early
+  if (!docs || docs.length === 0) {
+    return {
+      data: [],
+      meta
+    };
+  }
+
+  // --- 5. Aggregate Review Stats for Authors ---
+  
+  // Extract unique Author IDs from the fetched tours
+  const authorIds = [
+    ...new Set(
+      docs
+        .map((d: any) => (d.author && d.author._id ? d.author._id.toString() : null))
+        .filter(Boolean)
+    )
+  ];
+
+  let statsMap = new Map<string, { review_count: number; avg_rating: number }>();
+  if (authorIds.length > 0) {
+    // Aggregation pipeline to calculate stats
+    const agg = await Review.aggregate([
+      // Match reviews for authors on the current page
+      { $match: { guide: { $in: authorIds.map(id => new mongoose.Types.ObjectId(id)) } } },
+      {
+        $group: {
+          _id: "$guide",
+          review_count: { $sum: 1 },
+          avg_rating: { $avg: "$rating" }
+        }
+      },
+      {
+        $project: {
+          guideId: "$_id",
+          review_count: 1,
+          avg_rating: { $round: ["$avg_rating", 2] }
+        }
+      }
+    ]).exec();
+
+    statsMap = new Map(agg.map((s: any) => [s.guideId.toString(), { review_count: s.review_count, avg_rating: s.avg_rating }]));
+  }
+
+  // --- 6. Merge Review Stats into each Tour's Author Object ---
+  
+  const dataWithStats = docs.map((doc: any) => {
+    // Use .toObject() or spread to convert Mongoose document to a plain object for modification
+    const obj = doc.toObject ? doc.toObject() : { ...doc }; 
+    const author = obj.author;
+    
+    if (author && author._id) {
+      const stat = statsMap.get(author._id.toString());
+      
+      // Inject review stats into the author object
+      obj.author = {
+        ...author,
+        review_count: stat ? stat.review_count : 0,
+        avg_rating: stat ? stat.avg_rating : 0
+      };
+    }
+    return obj;
+  });
+
+  // --- 7. Return Final Data and Meta ---
+  return {
+    data: dataWithStats,
+    meta
+  };
+};
+
+export default {
+  getAllTours
+};
+
 const getSingleTour = async (slug: string) => {
   const tour = await Tour.findOne({ slug })
     .populate("author", "name email")
@@ -236,5 +442,6 @@ export const TourService = {
   getSingleTour,
   updateTour,
   deleteTour,
-  getToursByGuide
+  getToursByGuide,
+  getSearchTours
 };

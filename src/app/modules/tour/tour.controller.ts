@@ -53,6 +53,18 @@ const getAllTours = catchAsync(async (req: Request, res: Response) => {
     meta: result.meta
   })
 })
+const getSearchTours = catchAsync(async (req: Request, res: Response) => {
+  const query = req.query;
+  const result = await TourService.getSearchTours(query as Record<string, string>);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: "Tour Retrieved Successfully!",
+    data: result.data,
+    meta: result.meta
+  })
+})
 
 const getTourBySlug = catchAsync(async (req: Request, res: Response) => {
   const slug = req.params.slug;
@@ -97,5 +109,6 @@ export const TourController = {
   getAllTours,
   getTourBySlug,
   getToursByGuide,
+  getSearchTours,
   deleteTour
 };

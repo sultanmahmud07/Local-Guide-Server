@@ -10,6 +10,7 @@ const router = Router();
 
 // Public
 router.get("/", TourController.getAllTours);
+router.get("/search", TourController.getSearchTours);
 router.get("/:slug", TourController.getTourBySlug);
 
 // Authenticated routes

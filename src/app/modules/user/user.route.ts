@@ -21,6 +21,7 @@ router.get("/unauthorized-users", checkAuth(Role.ADMIN, Role.SUPER_ADMIN), UserC
 router.get("/me", checkAuth(...Object.values(Role)), UserControllers.getMe)
 router.get("/:id", checkAuth(...Object.values(Role)), UserControllers.getSingleUser)
 router.get("/guide/featured", UserControllers.getFeaturedGuide)
+router.get("/guide/search", UserControllers.getSearchGuide)
 router.get("/guide/:id", UserControllers.getGuideDetails)
 router.patch("/profile",
   checkAuth(...Object.values(Role)),
