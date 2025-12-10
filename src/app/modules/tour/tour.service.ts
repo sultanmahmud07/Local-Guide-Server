@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Tour } from "./tour.model";
 import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status-codes";
@@ -23,7 +22,7 @@ const createTour = async (data: Partial<ITour>) => {
   return { data: tour };
 };
 
-const updateTour = async (id: string, payload: Partial<ITour> ) => {
+const updateTour = async (id: string, payload: Partial<ITour>) => {
   const existingTour = await Tour.findById(id);
 
   if (!existingTour) {
@@ -37,30 +36,30 @@ const updateTour = async (id: string, payload: Partial<ITour> ) => {
       throw new AppError(httpStatus.CONFLICT, "Another tour already uses this slug");
     }
   }
-  
-  
-    if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
-        payload.images = [...payload.images, ...existingTour.images]
-    }
-
-    if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
-
-        const restDBImages = existingTour.images.filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
-
-        const updatedPayloadImages = (payload.images || [])
-            .filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
-            .filter(imageUrl => !restDBImages.includes(imageUrl))
-
-        payload.images = [...restDBImages, ...updatedPayloadImages]
 
 
-    }
+  if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
+    payload.images = [...payload.images, ...existingTour.images]
+  }
+
+  if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+
+    const restDBImages = existingTour.images.filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+
+    const updatedPayloadImages = (payload.images || [])
+      .filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+      .filter(imageUrl => !restDBImages.includes(imageUrl))
+
+    payload.images = [...restDBImages, ...updatedPayloadImages]
+
+
+  }
 
   // Update doc
   const updatedTour = await Tour.findByIdAndUpdate(id, payload, { new: true });
-    if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
-        await Promise.all(payload.deleteImages.map(url => deleteImageFromCLoudinary(url)))
-    }
+  if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+    await Promise.all(payload.deleteImages.map(url => deleteImageFromCLoudinary(url)))
+  }
   return { data: updatedTour };
 };
 // const getAllTours = async (query: Record<string, string>) => {
@@ -83,9 +82,7 @@ const updateTour = async (id: string, payload: Partial<ITour> ) => {
 // Assuming Tour, User, and Review models are imported
 
 const getAllTours = async (query: Record<string, string>) => {
-  
-  // 1. Initial Find and Pagination
-  // Populate the author data first to get the guide IDs
+
   const queryBuilder = new QueryBuilder(Tour.find().populate("author"), query);
 
   const toursQuery = await queryBuilder
@@ -101,7 +98,6 @@ const getAllTours = async (query: Record<string, string>) => {
   const authorIds = [
     ...new Set(
       tours
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map(tour => (tour.author as any)?._id?.toString())
         .filter(id => id) // Filter out null/undefined/unpopulated authors
     )
@@ -117,7 +113,7 @@ const getAllTours = async (query: Record<string, string>) => {
   const reviewStats = await Review.aggregate([
     // Filter reviews only for the authors currently present in the tours
     { $match: { guide: { $in: authorIds.map(id => new mongoose.Types.ObjectId(id)) } } },
-    
+
     // Group by guide ID to calculate statistics
     {
       $group: {
@@ -128,15 +124,15 @@ const getAllTours = async (query: Record<string, string>) => {
     },
     // Project to format the output
     {
-        $project: {
-            _id: 0,
-            guideId: "$_id",
-            review_count: 1,
-            avg_rating: { $round: ["$avg_rating", 2] } // Round to 2 decimal places
-        }
+      $project: {
+        _id: 0,
+        guideId: "$_id",
+        review_count: 1,
+        avg_rating: { $round: ["$avg_rating", 2] } // Round to 2 decimal places
+      }
     }
   ]);
-  
+
   // 4. Merge Review Stats back into Author Data within the Tour object
   const statsMap = new Map(reviewStats.map(stat => [stat.guideId.toString(), stat]));
 
@@ -146,13 +142,12 @@ const getAllTours = async (query: Record<string, string>) => {
 
     if (author && author._id) {
       const stats = statsMap.get(author._id.toString());
-      
+
       // Merge stats into the author object
       tourObj.author = {
         ...author,
         review_count: stats ? stats.review_count : 0,
         avg_rating: stats ? stats.avg_rating : 0.0,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     }
 
@@ -205,7 +200,7 @@ const getSearchTours = async (query: Record<string, string>) => {
     const raw = String(query.search).trim();
     if (raw.length > 0) {
       const terms = raw.split(/\s+/).map(t => t.trim()).filter(Boolean);
-      
+
       filters.$and = terms.map(term => {
         const ors = tourSearchableFields.map(field => {
           const obj: any = {};
@@ -226,12 +221,12 @@ const getSearchTours = async (query: Record<string, string>) => {
       const priceFilter: any = {};
       if (minRaw !== "" && !Number.isNaN(Number(minRaw))) priceFilter.$gte = Number(minRaw);
       if (maxRaw !== undefined && maxRaw !== "" && !Number.isNaN(Number(maxRaw))) priceFilter.$lte = Number(maxRaw);
-      
+
       // if "50" provided without dash, treat as min
       if (!range.includes("-") && !Number.isNaN(Number(range))) {
         priceFilter.$gte = Number(range);
       }
-      
+
       if (Object.keys(priceFilter).length > 0) {
         filters.fee = priceFilter;
       }
@@ -253,7 +248,7 @@ const getSearchTours = async (query: Record<string, string>) => {
     if (languageValue) {
       // Assuming tour.language is a string field like "English" or the primary language
       filters.language = { $regex: languageValue, $options: "i" };
-      
+
       // NOTE: If you wanted to search the Guide's languages (which is an array), 
       // you would need to use aggregation here, but since this is Tour.find(),
       // we assume we are searching the Tour's language field.
@@ -269,7 +264,7 @@ const getSearchTours = async (query: Record<string, string>) => {
   }
 
   // --- 3. Execute Query and Count ---
-  
+
   // Build initial query
   const baseQuery = Tour.find(filters);
 
@@ -305,7 +300,7 @@ const getSearchTours = async (query: Record<string, string>) => {
   }
 
   // --- 5. Aggregate Review Stats for Authors ---
-  
+
   // Extract unique Author IDs from the fetched tours
   const authorIds = [
     ...new Set(
@@ -341,15 +336,15 @@ const getSearchTours = async (query: Record<string, string>) => {
   }
 
   // --- 6. Merge Review Stats into each Tour's Author Object ---
-  
+
   const dataWithStats = docs.map((doc: any) => {
     // Use .toObject() or spread to convert Mongoose document to a plain object for modification
-    const obj = doc.toObject ? doc.toObject() : { ...doc }; 
+    const obj = doc.toObject ? doc.toObject() : { ...doc };
     const author = obj.author;
-    
+
     if (author && author._id) {
       const stat = statsMap.get(author._id.toString());
-      
+
       // Inject review stats into the author object
       obj.author = {
         ...author,
@@ -368,14 +363,54 @@ const getSearchTours = async (query: Record<string, string>) => {
 };
 
 const getSingleTour = async (slug: string) => {
-  const tour = await Tour.findOne({ slug })
-    .populate("author", "name email picture bio address")
+  // 1. Fetch the Tour and populate basic Author details
+  const tourQuery = Tour.findOne({ slug }).populate({
+    path: 'author',
+    select: 'name email picture bio address guideProfile' // Added guideProfile in case stats are there
+  });
 
-     if (!tour) {
+  // 2. Execute the query
+  const tour = await tourQuery.lean(); // .lean() for better performance if just reading
+
+  if (!tour) {
     throw new AppError(httpStatus.NOT_FOUND, "Tour not found with this slug.");
   }
+
+  // 3. Parallel Fetch: Get Reviews for this Tour AND Author Stats
+  const [reviews, authorStats] = await Promise.all([
+    // A. Get all reviews for this specific tour
+    Review.find({ tour: tour._id })
+      .populate("user", "name picture bio email") // Populate reviewer details
+      .sort({ createdAt: -1 }),         // Newest reviews first
+
+    // B. Calculate Author's Avg Rating & Review Count (Aggregation)
+    Review.aggregate([
+      { $match: { guide: new mongoose.Types.ObjectId(tour.author._id) } },
+      {
+        $group: {
+          _id: "$guide",
+          avg_rating: { $avg: "$rating" },
+          review_count: { $sum: 1 }
+        }
+      }
+    ])
+  ]);
+
+  // 4. Merge Author Stats into the Author object
+  const stats = authorStats[0] || { avg_rating: 0, review_count: 0 };
+
+  const tourWithAuthorStats = {
+    ...tour,
+    author: {
+      ...tour.author,
+      avg_rating: parseFloat(stats.avg_rating.toFixed(2)), // Round to 2 decimal places
+      review_count: stats.review_count
+    }
+  };
+
   return {
-    data: tour,
+    data: tourWithAuthorStats,
+    reviews: reviews // Return reviews separately or attach to tour object if preferred
   };
 };
 
@@ -413,7 +448,7 @@ const deleteTour = async (id: string) => {
   if (toDelete.length > 0) {
     await Promise.all(
       toDelete.map(async (url) => await deleteImageFromCLoudinary(url)
-    ));
+      ));
   }
 
   return deleted;

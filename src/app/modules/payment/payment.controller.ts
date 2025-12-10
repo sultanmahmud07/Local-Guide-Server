@@ -4,6 +4,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
 import { PaymentService } from "./payment.service";
+import { JwtPayload } from "jsonwebtoken";
 
 const initPayment = catchAsync(async (req: Request, res: Response) => {
     const bookingId = req.params.bookingId;
@@ -54,7 +55,6 @@ const getInvoiceDownloadUrl = catchAsync(
 );
 const validatePayment = catchAsync(
     async (req: Request, res: Response) => {
-        console.log("sslcommerz ipn url body", req.body);
         await SSLService.validatePayment(req.body)
         sendResponse(res, {
             statusCode: 200,
@@ -64,12 +64,61 @@ const validatePayment = catchAsync(
         });
     }
 );
+const getAllPayment = catchAsync(async (req: Request, res: Response) => {
 
+    const query = req.query
+    const result = await PaymentService.getAllPayment(query as Record<string, string>);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Payments retrieved successfully',
+        data: result.data,
+        meta: result.meta,
+    });
+});
+
+const getSinglePayment = catchAsync(async (req: Request, res: Response) => {
+    const id = req.params.id
+    const result = await PaymentService.getPaymentById(id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Payment retrieved successfully',
+        data: result,
+    });
+});
+const updatePayment = catchAsync(async (req: Request, res: Response) => {
+    const newStatus = req.body.status;
+    const { id } = req.params;
+    const decodedToken = req.user as JwtPayload;
+    const result = await PaymentService.updatePayment(id, newStatus, decodedToken);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Payment updated successfully',
+        data: result,
+    });
+});
+const deletePayment = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await PaymentService.deletePayment(id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Payment deleted successfully',
+        data: result,
+    });
+});
 export const PaymentController = {
     initPayment,
     successPayment,
     failPayment,
     cancelPayment,
     getInvoiceDownloadUrl,
+    getAllPayment,
+    deletePayment,
+    getSinglePayment,
+    updatePayment,
     validatePayment
 };

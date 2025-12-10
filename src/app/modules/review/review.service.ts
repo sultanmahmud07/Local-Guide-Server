@@ -104,8 +104,8 @@ export const ReviewService = {
   // Get all reviews for a tour (with filter, sort, pagination)
   async getReviewsByTour(tourId: string, query: Record<string, string>) {
     const baseQuery = Review.find({ tour: tourId })
-      .populate("user", "name email")
-      .populate("guide", "name");
+      .populate("user", "name email picture")
+      .populate("guide", "name email picture");
 
     const queryBuilder = new QueryBuilder(baseQuery, query);
 

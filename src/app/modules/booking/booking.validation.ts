@@ -2,7 +2,6 @@ import { z } from "zod";
 import { BOOKING_STATUS } from "./booking.interface";
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export const createBookingZodSchema = z.object({
   tour: z.string().min(1, { message: "Tour id is required" }),
@@ -17,7 +16,7 @@ export const createBookingZodSchema = z.object({
       const d = new Date(v + "T00:00:00");
       return d >= today;
     }, { message: "Date must be today or in the future" }),
-  time: z.string().regex(timeRegex, { message: "Time must be in HH:mm format" }),
+  time: z.string(),
   groupSize: z
     .union([z.number().int().min(1), z.string()])
     .optional()

@@ -8,10 +8,13 @@ import { Booking } from "../booking/booking.model";
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
 import { ITour } from "../tour/tour.interface";
-import { IUser } from "../user/user.interface";
+import { IUser, Role } from "../user/user.interface";
 import { PAYMENT_STATUS } from "./payment.interface";
 import { Payment } from "./payment.model";
 import { BOOKING_STATUS } from "../booking/booking.interface";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { paymentSearchableFields } from "./payment.constant";
+import { JwtPayload } from "jsonwebtoken";
 
 
 const initPayment = async (bookingId: string) => {
@@ -193,12 +196,96 @@ const getInvoiceDownloadUrl = async (paymentId: string) => {
 
     return payment.invoiceUrl
 };
+const getAllPayment = async (query: Record<string, string>) => {
 
+   const queryBuilder = new QueryBuilder(Payment.find()
+      .populate("booking", "date time groupSize totalPrice phone address"), query)
+
+  const payment = await queryBuilder
+    .search(paymentSearchableFields)
+    .filter()
+    .sort()
+    .fields()
+    .paginate()
+
+  const [data, meta] = await Promise.all([
+    payment.build(),
+    queryBuilder.getMeta()
+  ])
+  return {
+    data,
+    meta
+  }
+};
+const getPaymentById = async (id: string) => {
+     const payment = await Payment.findOne({ _id: id })
+      .populate("booking", "date time groupSize totalPrice phone address")
+    
+     return {
+         data: payment,
+     }
+}
+const deletePayment = async (paymentId: string,) => {
+  const payment = await Payment.findById(paymentId);
+  if (!payment) {
+    throw new AppError(httpStatus.NOT_FOUND, "Payment info not found");
+  }
+    await Payment.findByIdAndDelete(paymentId);
+    return { data: paymentId };
+  
+};
+const updatePayment = async (
+    paymentId: string,
+    status: PAYMENT_STATUS,
+    decodedToken: JwtPayload
+) => {
+
+    const role = decodedToken.role;
+
+    const payment = await Payment.findById(paymentId);
+    if (!payment) throw new AppError(404, "Payment not found");
+
+    // Only ADMIN & SUPER_ADMIN can update payment
+    const isAdmin = role === Role.ADMIN || role === Role.SUPER_ADMIN;
+    if (!isAdmin) {
+        throw new AppError(403, "You are not allowed to update payment status");
+    }
+
+    // Prevent unnecessary update
+    if (payment.status === status) {
+        return {
+            data: payment,
+            message: "Payment status already updated",
+        };
+    }
+
+    // Optional: Validate allowed transitions
+    const allowedStatuses = [PAYMENT_STATUS.PAID, PAYMENT_STATUS.UNPAID, PAYMENT_STATUS.FAILED];
+    if (!allowedStatuses.includes(status)) {
+        throw new AppError(400, "Invalid payment status value");
+    }
+
+    // Update payment
+    payment.status = status;
+    // payment.updatedAt = new Date();
+
+    await payment.save();
+
+    return {
+        success: true,
+        message: "Payment status updated successfully",
+        data: payment,
+    };
+};
 
 export const PaymentService = {
     initPayment,
     successPayment,
     failPayment,
     cancelPayment,
+    getAllPayment,
+    deletePayment,
+    updatePayment,
+    getPaymentById,
     getInvoiceDownloadUrl
 };
