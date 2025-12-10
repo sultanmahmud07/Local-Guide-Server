@@ -30,7 +30,7 @@ const updateTour = catchAsync(async (req: Request, res: Response) => {
         ...parsedData,
          images: (req.files as Express.Multer.File[])?.map(file => file.path)
     }
-// console.log("Payload:", payload)
+// console.log("Payload:", req.body)
     const tour = await TourService.updateTour(tourId, payload);
 
   sendResponse(res, {

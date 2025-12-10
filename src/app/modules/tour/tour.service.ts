@@ -30,26 +30,6 @@ const updateTour = async (id: string, payload: Partial<ITour> ) => {
     throw new AppError(httpStatus.NOT_FOUND, "Tour not found.");
   }
 
-  // If images provided, merge with existing; new images are expected to be first in payload.images
-  if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
-    payload.images = [...payload.images, ...existingTour.images];
-  }
-
-  // If deleteImages provided, remove them from DB images and also ensure we don't re-add them from payload.images
-  if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
-    const deleteSet = new Set(payload.deleteImages);
-
-    // Images that remain in DB after deletion
-    const restDBImages = existingTour.images.filter(imageUrl => !deleteSet.has(imageUrl));
-
-    // From incoming payload.images remove urls that were marked for deletion and also remove duplicates that are already in restDBImages
-    const updatedPayloadImages = (payload.images || [])
-      .filter(imageUrl => !deleteSet.has(imageUrl))
-      .filter(imageUrl => !restDBImages.includes(imageUrl));
-
-    payload.images = [...restDBImages, ...updatedPayloadImages];
-  }
-
   // If slug is being changed, ensure uniqueness
   if (payload.slug && payload.slug !== existingTour.slug) {
     const slugExists = await Tour.findOne({ slug: payload.slug, _id: { $ne: id } });
@@ -57,23 +37,30 @@ const updateTour = async (id: string, payload: Partial<ITour> ) => {
       throw new AppError(httpStatus.CONFLICT, "Another tour already uses this slug");
     }
   }
+  
+  
+    if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
+        payload.images = [...payload.images, ...existingTour.images]
+    }
+
+    if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+
+        const restDBImages = existingTour.images.filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+
+        const updatedPayloadImages = (payload.images || [])
+            .filter(imageUrl => !payload.deleteImages?.includes(imageUrl))
+            .filter(imageUrl => !restDBImages.includes(imageUrl))
+
+        payload.images = [...restDBImages, ...updatedPayloadImages]
+
+
+    }
 
   // Update doc
   const updatedTour = await Tour.findByIdAndUpdate(id, payload, { new: true });
-
-  // After successful update, delete images from Cloudinary if requested
-  if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
-    // attempt to delete each image, but don't crash the update if deletion fails — log instead
-    await Promise.all(
-      payload.deleteImages.map(async (url) => {
-        try {
-          await deleteImageFromCLoudinary(url);
-        } catch (err) {
-          // optionally log: console.error("Failed to delete image:", url, err);
-        }
-      })
-    );
-  }
+    if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+        await Promise.all(payload.deleteImages.map(url => deleteImageFromCLoudinary(url)))
+    }
   return { data: updatedTour };
 };
 // const getAllTours = async (query: Record<string, string>) => {
@@ -382,7 +369,7 @@ const getSearchTours = async (query: Record<string, string>) => {
 
 const getSingleTour = async (slug: string) => {
   const tour = await Tour.findOne({ slug })
-    .populate("author", "name email")
+    .populate("author", "name email picture bio address")
 
      if (!tour) {
     throw new AppError(httpStatus.NOT_FOUND, "Tour not found with this slug.");

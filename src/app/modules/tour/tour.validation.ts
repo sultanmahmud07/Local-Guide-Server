@@ -52,6 +52,7 @@ export const createTourZodSchema = z.object({
   ]).optional(),
 
   startTime: z.preprocess(toStringArray, z.array(z.string()).optional()),
+  deleteImages: z.preprocess(toStringArray, z.array(z.string()).optional()),
   itinerary: z.preprocess(toStringArray, z.array(z.string()).optional()),
   importantPoints: z.preprocess(toStringArray, z.array(z.string()).optional()),
   cancellationPolicy: z.preprocess(toStringArray, z.array(z.string()).optional()),
