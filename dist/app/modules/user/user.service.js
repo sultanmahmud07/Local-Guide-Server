@@ -157,6 +157,108 @@ const getFeaturedGuide = (query) => __awaiter(void 0, void 0, void 0, function* 
         meta
     };
 });
+const getFeaturedTourist = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    // 1. Initial Find and Pagination (using existing QueryBuilder)
+    const initialQuery = { role: "TOURIST" }; // Base query for guides
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(user_model_1.User.find(initialQuery), query);
+    const usersQuery = yield queryBuilder
+        .search(user_constant_1.userSearchableFields)
+        .filter()
+        .sort()
+        .fields()
+        .paginate(); // Paginate and filter before aggregation
+    const [guides, meta] = yield Promise.all([
+        usersQuery.build(), // Execute the find query to get the guides
+        queryBuilder.getMeta() // Get pagination metadata
+    ]);
+    // 2. Extract Guide IDs
+    const guideIds = guides.map(guide => guide._id);
+    // 3. Aggregate Review Data for the fetched Guides
+    // Note: This requires the Review model to be imported.
+    const reviewStats = yield review_model_1.Review.aggregate([
+        // Filter reviews only for the guides currently on the page
+        { $match: { user: { $in: guideIds } } },
+        // Group by guide ID to calculate statistics
+        {
+            $group: {
+                _id: "$user", // Group by the guide ID in the Review document
+                review_count: { $sum: 1 }, // Count the number of reviews
+                avg_rating: { $avg: "$rating" }, // Calculate the average rating
+            }
+        },
+        // Project to format the output (optional, but good practice)
+        {
+            $project: {
+                _id: 0,
+                guideId: "$_id",
+                review_count: 1,
+                avg_rating: { $round: ["$avg_rating", 2] } // Round to 2 decimal places
+            }
+        }
+    ]);
+    // 4. Merge Review Stats back into Guide Data
+    const statsMap = new Map(reviewStats.map(stat => [stat.guideId.toString(), stat]));
+    const dataWithStats = guides.map(guide => {
+        const guideObj = guide.toObject ? guide.toObject() : guide; // Convert Mongoose document to plain object
+        const stats = statsMap.get(guideObj._id.toString());
+        return Object.assign(Object.assign({}, guideObj), { review_count: stats ? stats.review_count : 0, avg_rating: stats ? stats.avg_rating : 0.0 });
+    });
+    return {
+        data: dataWithStats,
+        meta
+    };
+});
+const getSearchGuide = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    // 1. Initial Find and Pagination (using existing QueryBuilder)
+    const initialQuery = { role: "GUIDE" }; // Base query for guides
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(user_model_1.User.find(initialQuery), query);
+    const usersQuery = yield queryBuilder
+        .search(user_constant_1.userSearchableFields)
+        .filter()
+        .sort()
+        .fields()
+        .paginate(); // Paginate and filter before aggregation
+    const [guides, meta] = yield Promise.all([
+        usersQuery.build(), // Execute the find query to get the guides
+        queryBuilder.getMeta() // Get pagination metadata
+    ]);
+    // 2. Extract Guide IDs
+    const guideIds = guides.map(guide => guide._id);
+    // 3. Aggregate Review Data for the fetched Guides
+    // Note: This requires the Review model to be imported.
+    const reviewStats = yield review_model_1.Review.aggregate([
+        // Filter reviews only for the guides currently on the page
+        { $match: { guide: { $in: guideIds } } },
+        // Group by guide ID to calculate statistics
+        {
+            $group: {
+                _id: "$guide", // Group by the guide ID in the Review document
+                review_count: { $sum: 1 }, // Count the number of reviews
+                avg_rating: { $avg: "$rating" }, // Calculate the average rating
+            }
+        },
+        // Project to format the output (optional, but good practice)
+        {
+            $project: {
+                _id: 0,
+                guideId: "$_id",
+                review_count: 1,
+                avg_rating: { $round: ["$avg_rating", 2] } // Round to 2 decimal places
+            }
+        }
+    ]);
+    // 4. Merge Review Stats back into Guide Data
+    const statsMap = new Map(reviewStats.map(stat => [stat.guideId.toString(), stat]));
+    const dataWithStats = guides.map(guide => {
+        const guideObj = guide.toObject ? guide.toObject() : guide; // Convert Mongoose document to plain object
+        const stats = statsMap.get(guideObj._id.toString());
+        return Object.assign(Object.assign({}, guideObj), { review_count: stats ? stats.review_count : 0, avg_rating: stats ? stats.avg_rating : 0.0 });
+    });
+    return {
+        data: dataWithStats,
+        meta
+    };
+});
 const getAllDeletedUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const queryBuilder = new QueryBuilder_1.QueryBuilder(user_model_1.User.find({ isDeleted: true }), query);
     const users = yield queryBuilder
@@ -271,6 +373,8 @@ exports.UserServices = {
     getMe,
     getSingleUser,
     getGuideDetails,
+    getFeaturedTourist,
     getFeaturedGuide,
+    getSearchGuide,
     deleteUser
 };

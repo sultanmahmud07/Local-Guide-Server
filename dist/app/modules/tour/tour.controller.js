@@ -53,6 +53,17 @@ const getAllTours = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0,
         meta: result.meta
     });
 }));
+const getSearchTours = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const query = req.query;
+    const result = yield tour_service_1.TourService.getSearchTours(query);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "Tour Retrieved Successfully!",
+        data: result.data,
+        meta: result.meta
+    });
+}));
 const getTourBySlug = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const slug = req.params.slug;
     const result = yield tour_service_1.TourService.getSingleTour(slug);
@@ -92,5 +103,6 @@ exports.TourController = {
     getAllTours,
     getTourBySlug,
     getToursByGuide,
+    getSearchTours,
     deleteTour
 };

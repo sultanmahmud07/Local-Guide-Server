@@ -16,8 +16,10 @@ router.get("/all-admin", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN,
 router.get("/deleted-users", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.UserControllers.getAllDeletedUsers);
 router.get("/unauthorized-users", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.UserControllers.getAllUnauthorizedUsers);
 router.get("/me", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), user_controller_1.UserControllers.getMe);
-router.get("/:id", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), user_controller_1.UserControllers.getSingleUser);
+router.get("/:id", user_controller_1.UserControllers.getSingleUser);
 router.get("/guide/featured", user_controller_1.UserControllers.getFeaturedGuide);
+router.get("/tourist/featured", user_controller_1.UserControllers.getFeaturedTourist);
+router.get("/guide/search", user_controller_1.UserControllers.getSearchGuide);
 router.get("/guide/:id", user_controller_1.UserControllers.getGuideDetails);
 router.patch("/profile", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), multer_config_1.multerUpload.single("file"), (0, validateRequest_1.validateRequest)(user_validation_1.updateUserZodSchema), user_controller_1.UserControllers.updateUser);
 exports.UserRoutes = router;

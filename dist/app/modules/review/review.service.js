@@ -96,12 +96,42 @@ exports.ReviewService = {
             return { data, meta };
         });
     },
+    getAllReviews(query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseQuery = review_model_1.Review.find()
+                .populate("tour")
+                .populate("user", "name email picture")
+                .populate("guide", "name email picture");
+            const queryBuilder = new QueryBuilder_1.QueryBuilder(baseQuery, query);
+            const reviewsQuery = yield queryBuilder.search(["comment"]).filter().sort().paginate();
+            const [data, meta] = yield Promise.all([
+                reviewsQuery.build(),
+                queryBuilder.getMeta(),
+            ]);
+            return { data, meta };
+        });
+    },
     // Get reviews for a guide
     getReviewsByGuide(guideId, query) {
         return __awaiter(this, void 0, void 0, function* () {
             const baseQuery = review_model_1.Review.find({ guide: guideId })
                 .populate("user", "name picture email")
                 .populate("tour", "title");
+            const queryBuilder = new QueryBuilder_1.QueryBuilder(baseQuery, query);
+            const reviewsQuery = yield queryBuilder.search(["comment"]).filter().sort().paginate();
+            const [data, meta] = yield Promise.all([
+                reviewsQuery.build(),
+                queryBuilder.getMeta(),
+            ]);
+            return { data, meta };
+        });
+    },
+    getReviewsByTourist(id, query) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseQuery = review_model_1.Review.find({ user: id })
+                .populate("user", "name picture email")
+                .populate("guide", "name picture email")
+                .populate("tour", "title slug description images fee");
             const queryBuilder = new QueryBuilder_1.QueryBuilder(baseQuery, query);
             const reviewsQuery = yield queryBuilder.search(["comment"]).filter().sort().paginate();
             const [data, meta] = yield Promise.all([
@@ -128,8 +158,9 @@ exports.ReviewService = {
     getMyReviews(userId, query) {
         return __awaiter(this, void 0, void 0, function* () {
             const baseQuery = review_model_1.Review.find({ user: userId })
-                .populate("tour", "title")
-                .populate("guide", "name");
+                .populate("tour")
+                .populate("user", "name email")
+                .populate("guide", "name email picture");
             const queryBuilder = new QueryBuilder_1.QueryBuilder(baseQuery, query);
             const reviewsQuery = yield queryBuilder.search(["comment"]).filter().sort().paginate();
             const [data, meta] = yield Promise.all([

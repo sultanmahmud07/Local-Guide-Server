@@ -380,10 +380,6 @@ const getSearchTours = async (query: Record<string, string>) => {
   };
 };
 
-export default {
-  getAllTours
-};
-
 const getSingleTour = async (slug: string) => {
   const tour = await Tour.findOne({ slug })
     .populate("author", "name email")

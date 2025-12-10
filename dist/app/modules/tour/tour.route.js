@@ -11,6 +11,7 @@ const multer_config_1 = require("../../config/multer.config");
 const router = (0, express_1.Router)();
 // Public
 router.get("/", tour_controller_1.TourController.getAllTours);
+router.get("/search", tour_controller_1.TourController.getSearchTours);
 router.get("/:slug", tour_controller_1.TourController.getTourBySlug);
 // Authenticated routes
 router.get("/guide", (0, checkAuth_1.checkAuth)(user_interface_1.Role.GUIDE), tour_controller_1.TourController.getToursByGuide);

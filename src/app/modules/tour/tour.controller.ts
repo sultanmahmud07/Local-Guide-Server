@@ -24,13 +24,13 @@ const createTour = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateTour = catchAsync(async (req: Request, res: Response) => {
-    const parsedData = req.body.data ? JSON.parse(req.body.data) : req.body;
+    const parsedData = req.body?.data ? JSON.parse(req.body.data) : req.body;
     const tourId = req.params.id
       const payload = {
         ...parsedData,
-        images: (req.files as Express.Multer.File[])?.map(file => file.path)
+         images: (req.files as Express.Multer.File[])?.map(file => file.path)
     }
-
+// console.log("Payload:", payload)
     const tour = await TourService.updateTour(tourId, payload);
 
   sendResponse(res, {

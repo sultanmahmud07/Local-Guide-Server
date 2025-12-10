@@ -15,7 +15,7 @@ router.get("/:slug", TourController.getTourBySlug);
 
 // Authenticated routes
 router.get("/guide", checkAuth(Role.GUIDE), TourController.getToursByGuide);
-router.patch("/:id", checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN), TourController.updateTour);
+// router.patch("/:id", checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN), TourController.updateTour);
 
 // Create Tour (GUIDE, ADMIN)
 router.post(
@@ -29,15 +29,12 @@ router.post(
 router.patch(
   "/update/:id",
   checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN),
-  multerUpload.fields([
-    { name: "thumbnail", maxCount: 1 },
-    { name: "files", maxCount: 10 },
-  ]),
+  multerUpload.array("files"),
   validateRequest(updateTourZodSchema),
   TourController.updateTour
 );
 
-router.delete("/:id", checkAuth(Role.GUIDE ,Role.ADMIN, Role.SUPER_ADMIN), TourController.deleteTour);
+router.delete("/:id", checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN), TourController.deleteTour);
 
 
 

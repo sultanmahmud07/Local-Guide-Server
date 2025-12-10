@@ -4,10 +4,10 @@ exports.tourLanguages = exports.tourCategories = exports.tourSearchableFields = 
 exports.tourSearchableFields = [
     "title",
     "description",
-    "itinerary",
-    "destinationCity",
-    "category",
-    "language"
+    // "itinerary",
+    // "destinationCity",
+    // "category",
+    // "language"
 ];
 exports.tourCategories = ["Food", "Art", "Adventure", "History", "Nature", "Other"];
 exports.tourLanguages = ["English", "Spanish", "French", "German", "Other"];

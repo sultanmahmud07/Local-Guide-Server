@@ -71,6 +71,28 @@ const getFeaturedGuide = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(vo
         meta: result.meta
     });
 }));
+const getFeaturedTourist = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const query = req.query;
+    const result = yield user_service_1.UserServices.getFeaturedTourist(query);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "Tourist Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    });
+}));
+const getSearchGuide = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const query = req.query;
+    const result = yield user_service_1.UserServices.getSearchGuide(query);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "All Guide Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    });
+}));
 const getAllDeletedUsers = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.query;
     const result = yield user_service_1.UserServices.getAllDeletedUsers(query);
@@ -145,5 +167,7 @@ exports.UserControllers = {
     getSingleUser,
     getGuideDetails,
     getFeaturedGuide,
+    getSearchGuide,
+    getFeaturedTourist,
     deleteUser
 };

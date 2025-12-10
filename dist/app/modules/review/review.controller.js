@@ -39,6 +39,17 @@ exports.ReviewController = {
             meta: result.meta,
         });
     })),
+    getAllReviews: (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const query = req.query;
+        const result = yield review_service_1.ReviewService.getAllReviews(query);
+        (0, sendResponse_1.sendResponse)(res, {
+            success: true,
+            statusCode: http_status_codes_1.default.OK,
+            message: "Reviews all retrieved successfully",
+            data: result.data,
+            meta: result.meta,
+        });
+    })),
     getReviewsByGuide: (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const query = req.query;
         const result = yield review_service_1.ReviewService.getReviewsByGuide(req.params.guideId, query);
@@ -46,6 +57,17 @@ exports.ReviewController = {
             success: true,
             statusCode: http_status_codes_1.default.OK,
             message: "Guide reviews retrieved successfully",
+            data: result.data,
+            meta: result.meta,
+        });
+    })),
+    getReviewsByTourist: (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const query = req.query;
+        const result = yield review_service_1.ReviewService.getReviewsByTourist(req.params.touristId, query);
+        (0, sendResponse_1.sendResponse)(res, {
+            success: true,
+            statusCode: http_status_codes_1.default.OK,
+            message: "Tourist reviews retrieved successfully",
             data: result.data,
             meta: result.meta,
         });
