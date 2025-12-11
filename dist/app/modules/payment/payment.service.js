@@ -21,9 +21,12 @@ const invoice_1 = require("../../utils/invoice");
 const sendEmail_1 = require("../../utils/sendEmail");
 const booking_model_1 = require("../booking/booking.model");
 const sslCommerz_service_1 = require("../sslCommerz/sslCommerz.service");
+const user_interface_1 = require("../user/user.interface");
 const payment_interface_1 = require("./payment.interface");
 const payment_model_1 = require("./payment.model");
 const booking_interface_1 = require("../booking/booking.interface");
+const QueryBuilder_1 = require("../../utils/QueryBuilder");
+const payment_constant_1 = require("./payment.constant");
 const initPayment = (bookingId) => __awaiter(void 0, void 0, void 0, function* () {
     const payment = yield payment_model_1.Payment.findOne({ booking: bookingId });
     if (!payment) {
@@ -156,10 +159,79 @@ const getInvoiceDownloadUrl = (paymentId) => __awaiter(void 0, void 0, void 0, f
     }
     return payment.invoiceUrl;
 });
+const getAllPayment = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(payment_model_1.Payment.find()
+        .populate("booking", "date time groupSize totalPrice phone address"), query);
+    const payment = yield queryBuilder
+        .search(payment_constant_1.paymentSearchableFields)
+        .filter()
+        .sort()
+        .fields()
+        .paginate();
+    const [data, meta] = yield Promise.all([
+        payment.build(),
+        queryBuilder.getMeta()
+    ]);
+    return {
+        data,
+        meta
+    };
+});
+const getPaymentById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const payment = yield payment_model_1.Payment.findOne({ _id: id })
+        .populate("booking", "date time groupSize totalPrice phone address");
+    return {
+        data: payment,
+    };
+});
+const deletePayment = (paymentId) => __awaiter(void 0, void 0, void 0, function* () {
+    const payment = yield payment_model_1.Payment.findById(paymentId);
+    if (!payment) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Payment info not found");
+    }
+    yield payment_model_1.Payment.findByIdAndDelete(paymentId);
+    return { data: paymentId };
+});
+const updatePayment = (paymentId, status, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+    const role = decodedToken.role;
+    const payment = yield payment_model_1.Payment.findById(paymentId);
+    if (!payment)
+        throw new AppError_1.default(404, "Payment not found");
+    // Only ADMIN & SUPER_ADMIN can update payment
+    const isAdmin = role === user_interface_1.Role.ADMIN || role === user_interface_1.Role.SUPER_ADMIN;
+    if (!isAdmin) {
+        throw new AppError_1.default(403, "You are not allowed to update payment status");
+    }
+    // Prevent unnecessary update
+    if (payment.status === status) {
+        return {
+            data: payment,
+            message: "Payment status already updated",
+        };
+    }
+    // Optional: Validate allowed transitions
+    const allowedStatuses = [payment_interface_1.PAYMENT_STATUS.PAID, payment_interface_1.PAYMENT_STATUS.UNPAID, payment_interface_1.PAYMENT_STATUS.FAILED];
+    if (!allowedStatuses.includes(status)) {
+        throw new AppError_1.default(400, "Invalid payment status value");
+    }
+    // Update payment
+    payment.status = status;
+    // payment.updatedAt = new Date();
+    yield payment.save();
+    return {
+        success: true,
+        message: "Payment status updated successfully",
+        data: payment,
+    };
+});
 exports.PaymentService = {
     initPayment,
     successPayment,
     failPayment,
     cancelPayment,
+    getAllPayment,
+    deletePayment,
+    updatePayment,
+    getPaymentById,
     getInvoiceDownloadUrl
 };

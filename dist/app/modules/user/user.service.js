@@ -71,6 +71,26 @@ const updateUser = (payload, decodedToken) => __awaiter(void 0, void 0, void 0, 
     });
     return updatedUser;
 });
+const updateUserByAdmin = (userId, payload, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+    if (payload.role) {
+        if ([user_interface_1.Role.TOURIST, user_interface_1.Role.GUIDE].includes(decodedToken.role)) {
+            throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Insufficient role");
+        }
+        if (payload.role === user_interface_1.Role.SUPER_ADMIN && decodedToken.role === user_interface_1.Role.ADMIN) {
+            throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Only super admin can assign super admin");
+        }
+    }
+    if (payload.isActive || payload.isDeleted) {
+        if ([user_interface_1.Role.TOURIST, user_interface_1.Role.GUIDE].includes(decodedToken.role)) {
+            throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Insufficient role");
+        }
+    }
+    const updatedUser = yield user_model_1.User.findByIdAndUpdate(userId, payload, {
+        new: true,
+        runValidators: true
+    });
+    return updatedUser;
+});
 const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const queryBuilder = new QueryBuilder_1.QueryBuilder(user_model_1.User.find({ isDeleted: false }), query);
     const users = yield queryBuilder
@@ -376,5 +396,6 @@ exports.UserServices = {
     getFeaturedTourist,
     getFeaturedGuide,
     getSearchGuide,
-    deleteUser
+    deleteUser,
+    updateUserByAdmin
 };

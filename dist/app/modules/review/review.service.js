@@ -85,8 +85,8 @@ exports.ReviewService = {
     getReviewsByTour(tourId, query) {
         return __awaiter(this, void 0, void 0, function* () {
             const baseQuery = review_model_1.Review.find({ tour: tourId })
-                .populate("user", "name email")
-                .populate("guide", "name");
+                .populate("user", "name email picture")
+                .populate("guide", "name email picture");
             const queryBuilder = new QueryBuilder_1.QueryBuilder(baseQuery, query);
             const reviewsQuery = yield queryBuilder.search(["comment"]).filter().sort().paginate();
             const [data, meta] = yield Promise.all([

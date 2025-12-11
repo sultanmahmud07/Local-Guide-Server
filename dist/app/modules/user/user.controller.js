@@ -38,6 +38,18 @@ const updateUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
         data: user,
     });
 }));
+const updateUserByAdmin = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const verifiedToken = req.user;
+    const userId = req.params.id;
+    const payload = req.body;
+    const user = yield user_service_1.UserServices.updateUserByAdmin(userId, payload, verifiedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "User Updated Successfully",
+        data: user,
+    });
+}));
 const getAllUsers = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.query;
     const result = yield user_service_1.UserServices.getAllUsers(query);
@@ -163,6 +175,7 @@ exports.UserControllers = {
     getAllDeletedUsers,
     getAllUnauthorizedUsers,
     updateUser,
+    updateUserByAdmin,
     getMe,
     getSingleUser,
     getGuideDetails,

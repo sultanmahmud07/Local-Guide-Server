@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TourService = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const tour_model_1 = require("./tour.model");
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
@@ -36,21 +35,6 @@ const updateTour = (id, payload) => __awaiter(void 0, void 0, void 0, function* 
     if (!existingTour) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Tour not found.");
     }
-    // If images provided, merge with existing; new images are expected to be first in payload.images
-    if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
-        payload.images = [...payload.images, ...existingTour.images];
-    }
-    // If deleteImages provided, remove them from DB images and also ensure we don't re-add them from payload.images
-    if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
-        const deleteSet = new Set(payload.deleteImages);
-        // Images that remain in DB after deletion
-        const restDBImages = existingTour.images.filter(imageUrl => !deleteSet.has(imageUrl));
-        // From incoming payload.images remove urls that were marked for deletion and also remove duplicates that are already in restDBImages
-        const updatedPayloadImages = (payload.images || [])
-            .filter(imageUrl => !deleteSet.has(imageUrl))
-            .filter(imageUrl => !restDBImages.includes(imageUrl));
-        payload.images = [...restDBImages, ...updatedPayloadImages];
-    }
     // If slug is being changed, ensure uniqueness
     if (payload.slug && payload.slug !== existingTour.slug) {
         const slugExists = yield tour_model_1.Tour.findOne({ slug: payload.slug, _id: { $ne: id } });
@@ -58,19 +42,20 @@ const updateTour = (id, payload) => __awaiter(void 0, void 0, void 0, function* 
             throw new AppError_1.default(http_status_codes_1.default.CONFLICT, "Another tour already uses this slug");
         }
     }
+    if (payload.images && payload.images.length > 0 && existingTour.images && existingTour.images.length > 0) {
+        payload.images = [...payload.images, ...existingTour.images];
+    }
+    if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
+        const restDBImages = existingTour.images.filter(imageUrl => { var _a; return !((_a = payload.deleteImages) === null || _a === void 0 ? void 0 : _a.includes(imageUrl)); });
+        const updatedPayloadImages = (payload.images || [])
+            .filter(imageUrl => { var _a; return !((_a = payload.deleteImages) === null || _a === void 0 ? void 0 : _a.includes(imageUrl)); })
+            .filter(imageUrl => !restDBImages.includes(imageUrl));
+        payload.images = [...restDBImages, ...updatedPayloadImages];
+    }
     // Update doc
     const updatedTour = yield tour_model_1.Tour.findByIdAndUpdate(id, payload, { new: true });
-    // After successful update, delete images from Cloudinary if requested
     if (payload.deleteImages && payload.deleteImages.length > 0 && existingTour.images && existingTour.images.length > 0) {
-        // attempt to delete each image, but don't crash the update if deletion fails — log instead
-        yield Promise.all(payload.deleteImages.map((url) => __awaiter(void 0, void 0, void 0, function* () {
-            try {
-                yield (0, cloudinary_config_1.deleteImageFromCLoudinary)(url);
-            }
-            catch (err) {
-                // optionally log: console.error("Failed to delete image:", url, err);
-            }
-        })));
+        yield Promise.all(payload.deleteImages.map(url => (0, cloudinary_config_1.deleteImageFromCLoudinary)(url)));
     }
     return { data: updatedTour };
 });
@@ -90,8 +75,6 @@ const updateTour = (id, payload) => __awaiter(void 0, void 0, void 0, function* 
 // };
 // Assuming Tour, User, and Review models are imported
 const getAllTours = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    // 1. Initial Find and Pagination
-    // Populate the author data first to get the guide IDs
     const queryBuilder = new QueryBuilder_1.QueryBuilder(tour_model_1.Tour.find().populate("author"), query);
     const toursQuery = yield queryBuilder
         .search(tour_constant_1.tourSearchableFields)
@@ -103,7 +86,6 @@ const getAllTours = (query) => __awaiter(void 0, void 0, void 0, function* () {
     // 2. Extract unique Author IDs from the fetched tours
     const authorIds = [
         ...new Set(tours
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .map(tour => { var _a, _b; return (_b = (_a = tour.author) === null || _a === void 0 ? void 0 : _a._id) === null || _b === void 0 ? void 0 : _b.toString(); })
             .filter(id => id) // Filter out null/undefined/unpopulated authors
         )
@@ -323,17 +305,41 @@ const getSearchTours = (query) => __awaiter(void 0, void 0, void 0, function* ()
         meta
     };
 });
-exports.default = {
-    getAllTours
-};
 const getSingleTour = (slug) => __awaiter(void 0, void 0, void 0, function* () {
-    const tour = yield tour_model_1.Tour.findOne({ slug })
-        .populate("author", "name email");
+    // 1. Fetch the Tour and populate basic Author details
+    const tourQuery = tour_model_1.Tour.findOne({ slug }).populate({
+        path: 'author',
+        select: 'name email picture bio address guideProfile' // Added guideProfile in case stats are there
+    });
+    // 2. Execute the query
+    const tour = yield tourQuery.lean(); // .lean() for better performance if just reading
     if (!tour) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Tour not found with this slug.");
     }
+    // 3. Parallel Fetch: Get Reviews for this Tour AND Author Stats
+    const [reviews, authorStats] = yield Promise.all([
+        // A. Get all reviews for this specific tour
+        review_model_1.Review.find({ tour: tour._id })
+            .populate("user", "name picture bio email") // Populate reviewer details
+            .sort({ createdAt: -1 }), // Newest reviews first
+        // B. Calculate Author's Avg Rating & Review Count (Aggregation)
+        review_model_1.Review.aggregate([
+            { $match: { guide: new mongoose_1.default.Types.ObjectId(tour.author._id) } },
+            {
+                $group: {
+                    _id: "$guide",
+                    avg_rating: { $avg: "$rating" },
+                    review_count: { $sum: 1 }
+                }
+            }
+        ])
+    ]);
+    // 4. Merge Author Stats into the Author object
+    const stats = authorStats[0] || { avg_rating: 0, review_count: 0 };
+    const tourWithAuthorStats = Object.assign(Object.assign({}, tour), { author: Object.assign(Object.assign({}, tour.author), { avg_rating: parseFloat(stats.avg_rating.toFixed(2)), review_count: stats.review_count }) });
     return {
-        data: tour,
+        data: tourWithAuthorStats,
+        reviews: reviews // Return reviews separately or attach to tour object if preferred
     };
 });
 const getToursByGuide = (guideId, query) => __awaiter(void 0, void 0, void 0, function* () {

@@ -30,10 +30,11 @@ const createTour = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, 
     });
 }));
 const updateTour = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const parsedData = req.body.data ? JSON.parse(req.body.data) : req.body;
+    var _a, _b;
+    const parsedData = ((_a = req.body) === null || _a === void 0 ? void 0 : _a.data) ? JSON.parse(req.body.data) : req.body;
     const tourId = req.params.id;
-    const payload = Object.assign(Object.assign({}, parsedData), { images: (_a = req.files) === null || _a === void 0 ? void 0 : _a.map(file => file.path) });
+    const payload = Object.assign(Object.assign({}, parsedData), { images: (_b = req.files) === null || _b === void 0 ? void 0 : _b.map(file => file.path) });
+    // console.log("Payload:", req.body)
     const tour = yield tour_service_1.TourService.updateTour(tourId, payload);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: http_status_codes_1.default.OK,

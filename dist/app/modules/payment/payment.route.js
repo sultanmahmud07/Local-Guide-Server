@@ -15,4 +15,8 @@ router.post("/fail", payment_controller_1.PaymentController.failPayment);
 router.post("/cancel", payment_controller_1.PaymentController.cancelPayment);
 router.get("/invoice/:paymentId", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), payment_controller_1.PaymentController.getInvoiceDownloadUrl);
 router.post("/validate-payment", payment_controller_1.PaymentController.validatePayment);
+router.get("/", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), payment_controller_1.PaymentController.getAllPayment);
+router.get("/:id", payment_controller_1.PaymentController.getSinglePayment);
+router.patch("/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), payment_controller_1.PaymentController.updatePayment);
+router.delete("/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), payment_controller_1.PaymentController.deletePayment);
 exports.PaymentRoutes = router;

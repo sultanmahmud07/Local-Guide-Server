@@ -4,7 +4,6 @@ exports.updateBookingStatusZodSchema = exports.createBookingZodSchema = void 0;
 const zod_1 = require("zod");
 const booking_interface_1 = require("./booking.interface");
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 exports.createBookingZodSchema = zod_1.z.object({
     tour: zod_1.z.string().min(1, { message: "Tour id is required" }),
     guide: zod_1.z.string().min(1, { message: "Guide id is required" }),
@@ -18,7 +17,7 @@ exports.createBookingZodSchema = zod_1.z.object({
         const d = new Date(v + "T00:00:00");
         return d >= today;
     }, { message: "Date must be today or in the future" }),
-    time: zod_1.z.string().regex(timeRegex, { message: "Time must be in HH:mm format" }),
+    time: zod_1.z.string(),
     groupSize: zod_1.z
         .union([zod_1.z.number().int().min(1), zod_1.z.string()])
         .optional()

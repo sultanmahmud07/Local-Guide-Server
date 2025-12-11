@@ -22,4 +22,5 @@ router.get("/tourist/featured", user_controller_1.UserControllers.getFeaturedTou
 router.get("/guide/search", user_controller_1.UserControllers.getSearchGuide);
 router.get("/guide/:id", user_controller_1.UserControllers.getGuideDetails);
 router.patch("/profile", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), multer_config_1.multerUpload.single("file"), (0, validateRequest_1.validateRequest)(user_validation_1.updateUserZodSchema), user_controller_1.UserControllers.updateUser);
+router.patch("/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), (0, validateRequest_1.validateRequest)(user_validation_1.updateUserZodSchema), user_controller_1.UserControllers.updateUserByAdmin);
 exports.UserRoutes = router;

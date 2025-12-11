@@ -32,9 +32,6 @@ const storage = new multer_storage_cloudinary_1.CloudinaryStorage({
             Date.now() +
             "-" +
             safeName;
-        // ✅ get folder dynamically (example: from body or query)
-        // const folderName = req.body || "alive_gadget"; // fallback to "default"
-        // console.log("Folder Name:", folderName)
         return {
             folder: "local_guide", // ✅ Cloudinary folder
             public_id: uniqueFileName,

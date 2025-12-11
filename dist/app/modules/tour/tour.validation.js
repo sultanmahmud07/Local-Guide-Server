@@ -54,6 +54,7 @@ exports.createTourZodSchema = zod_1.default.object({
         "Other"
     ]).optional(),
     startTime: zod_1.default.preprocess(toStringArray, zod_1.default.array(zod_1.default.string()).optional()),
+    deleteImages: zod_1.default.preprocess(toStringArray, zod_1.default.array(zod_1.default.string()).optional()),
     itinerary: zod_1.default.preprocess(toStringArray, zod_1.default.array(zod_1.default.string()).optional()),
     importantPoints: zod_1.default.preprocess(toStringArray, zod_1.default.array(zod_1.default.string()).optional()),
     cancellationPolicy: zod_1.default.preprocess(toStringArray, zod_1.default.array(zod_1.default.string()).optional()),
