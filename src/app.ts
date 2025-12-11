@@ -22,7 +22,7 @@ app.use(passport.session())
 app.use(cookieParser())
 app.use(express.json())
 app.use(cors({
-    origin: ["http://localhost:3000", "https://parcel-delivery-frontend-nine.vercel.app"],
+    origin: ["http://localhost:3000", "https://local-guide-client-fz9u.vercel.app"],
     // methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     credentials: true, 
   }))
