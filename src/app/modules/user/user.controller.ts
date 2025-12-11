@@ -33,6 +33,19 @@ const updateUser = catchAsync(async (req: Request, res: Response) => {
         data: user,
     })
 })
+const updateUserByAdmin = catchAsync(async (req: Request, res: Response) => {
+    const verifiedToken = req.user;
+    const userId = req.params.id;
+    const payload = req.body
+    const user = await UserServices.updateUserByAdmin(userId, payload, verifiedToken as JwtPayload)
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "User Updated Successfully",
+        data: user,
+    })
+})
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     const query = req.query;
@@ -171,6 +184,7 @@ export const UserControllers = {
     getAllDeletedUsers,
     getAllUnauthorizedUsers,
     updateUser,
+    updateUserByAdmin,
     getMe,
     getSingleUser,
     getGuideDetails,

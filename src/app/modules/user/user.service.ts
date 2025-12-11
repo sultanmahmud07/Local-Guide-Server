@@ -62,6 +62,31 @@ const updateUser = async (payload: Partial<IUser>, decodedToken: JwtPayload) => 
 
   return updatedUser;
 };
+const updateUserByAdmin = async (userId:string, payload: Partial<IUser>, decodedToken: JwtPayload) => {
+
+  if (payload.role) {
+    if ([Role.TOURIST, Role.GUIDE].includes(decodedToken.role)) {
+      throw new AppError(httpStatus.FORBIDDEN, "Insufficient role");
+    }
+
+    if (payload.role === Role.SUPER_ADMIN && decodedToken.role === Role.ADMIN) {
+      throw new AppError(httpStatus.FORBIDDEN, "Only super admin can assign super admin");
+    }
+  }
+
+  if (payload.isActive || payload.isDeleted) {
+    if ([Role.TOURIST, Role.GUIDE].includes(decodedToken.role)) {
+      throw new AppError(httpStatus.FORBIDDEN, "Insufficient role");
+    }
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(userId, payload, {
+    new: true,
+    runValidators: true
+  });
+
+  return updatedUser;
+};
 
 const getAllUsers = async (query: Record<string, string>) => {
 
@@ -454,5 +479,6 @@ export const UserServices = {
   getFeaturedTourist,
   getFeaturedGuide,
   getSearchGuide,
-  deleteUser
+  deleteUser,
+  updateUserByAdmin
 }

@@ -29,5 +29,9 @@ router.patch("/profile",
   multerUpload.single("file"),
   validateRequest(updateUserZodSchema),
   UserControllers.updateUser)
+router.patch("/:id",
+   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(updateUserZodSchema),
+  UserControllers.updateUserByAdmin)
 
 export const UserRoutes = router
