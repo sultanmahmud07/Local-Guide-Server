@@ -14,7 +14,7 @@ router.get("/search", TourController.getSearchTours);
 router.get("/:slug", TourController.getTourBySlug);
 
 // Authenticated routes
-router.get("/guide", checkAuth(Role.GUIDE), TourController.getToursByGuide);
+router.get("/guide/all", checkAuth(Role.GUIDE), TourController.getToursByGuide);
 // router.patch("/:id", checkAuth(Role.GUIDE, Role.ADMIN, Role.SUPER_ADMIN), TourController.updateTour);
 
 // Create Tour (GUIDE, ADMIN)
