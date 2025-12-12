@@ -1,182 +1,161 @@
-# 📦 Parcel Delivery API
+# Local Guide Backend (Node.js + Express + MongoDB)
 
-A backend service for managing parcel deliveries, users, and role-based operations.  
-This system supports **senders, receivers, admins, and super admins**, providing secure parcel tracking and management.
-
-**Base URL:**  
-👉 `http://localhost:5000` (Development)  
-👉 `https://parcel-delivery-api-sigma.vercel.app` (Production)
+A scalable backend API powering the **Local Guide Platform**, where travelers can book personalized tours from local guides.  
+This repository contains authentication, tour management, booking workflow, reviews, messaging, and payment integration.
 
 ---
 
-## 🚀 Project Overview
-
-The **Parcel Delivery API** is designed to handle end-to-end parcel delivery management.  
-It allows:
-- **Senders** to create and manage parcels.
-- **Receivers** to confirm deliveries and view delivery history.
-- **Admins/Super Admins** to manage users, parcels, and system-wide operations.
-- Supports **Google OAuth login**, JWT authentication, and secure parcel tracking.
+## 🌍 Live API URL  
+**Production:** https://your-api-domain.com  
+**Swagger Docs (optional):** https://your-api-domain.com/api-docs  
 
 ---
 
-## ✨ Features
+## 🚀 Features  
+### ✅ **Authentication & Authorization**
+- JWT-based secure auth  
+- Role-based access control (Admin, Guide, Tourist)  
+- Email/password + provider support  
 
-- 🔐 **Role-based Authentication** (Admin, Super Admin, Sender, Receiver)  
-- 📦 **Parcel Management**  
-  - Create, update, cancel, and track parcels  
-  - Change parcel delivery date/time  
-  - Block/unblock parcels with logs  
-- 👤 **User Management**  
-  - Register/login with role  
-  - Block/unblock users (admin/super-admin only)  
-- 📊 **Parcel Status Logs** (audit trail of parcel activities)  
-- 📝 **Receiver History & Delivery Confirmation**  
-- ⚡ **JWT Authentication & Google OAuth2.0 Support**
+### 🎒 **Tours Module**
+- Create, update, delete tours (with images)  
+- Filtering, searching & pagination  
+- Public/private tour visibility  
+- Guide analytics (tour count, recent bookings, earnings)
+
+### 📅 **Booking System**
+- Traveler requests → Guide accepts/declines  
+- Status lifecycle: `PENDING → CONFIRMED → COMPLETED → CANCELLED`  
+- Group size, date/time, fee calculation  
+- Integrated payment workflow  
+
+### ⭐ **Reviews**
+- Tourist can review a tour after completion  
+- Guides get average ratings & review count  
+- Integrated into Explore listings
+
+### 💬 **Messaging**
+- Tourist → Guide custom request  
+- Stored message thread per booking  
+
+### 💳 **Payment Integration**
+- SSLCommerz (or your provider)  
+- Payment initialization + status update  
+- Admin payment overview analytics  
+
+### 📊 **Admin Dashboard Analytics**
+- Total users (active/inactive/blocked)  
+- User growth (7 days / 30 days)  
+- Users by role  
+- Total bookings, payments, guides, tours  
+- Chart-ready data for dashboard  
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
+### **Backend**
+- Node.js  
+- Express.js  
+- TypeScript  
+- Mongoose (MongoDB)  
+- JWT Authentication  
+- Multer (file uploads)  
+- Zod Validation  
+- SSLCommerz / Stripe Payment Gateway  
 
-- **Backend:** Node.js, Express.js, TypeScript  
-- **Database:** MongoDB + Mongoose  
-- **Authentication:** JWT & Google OAuth  
-- **Validation:** Zod schema validation  
-- **Error Handling:** Centralized custom error handler  
-
----
-
-## 📍 API Endpoints
-
-### 🔑 Auth (`/api/v1/auth`)
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| POST   | `/api/v1/auth/login` | All | Login with credentials (email & password) |
-| POST   | `/api/v1/auth/refresh-token` | All | Refresh expired access token |
-| POST   | `/api/v1/auth/logout` | All | Logout and clear refresh token |
-| POST   | `/api/v1/auth/reset-password` | Authenticated (All Roles) | Reset password(oldPassword & newPassword) |
-| GET    | `/api/v1/auth/google/callback` | Public | Google OAuth callback handler |
+### **Dev Tools**
+- Nodemon  
+- ESLint + Prettier  
+- Docker-ready configuration  
 
 ---
 
-### 👤 User (`/api/v1/user`)
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| POST   | `/api/v1/user/register` | Public | Register a new user (SENDER by default) |
-| GET    | `/api/v1/user/all-users` | Admin, Super Admin | Get all users |
-| GET    | `/api/v1/user/:id` | Admin, Super Admin | Get a single user info |
-| GET    | `/api/v1/user/me` | Admin, Super Admin, Sender, Receiver | Get self profile data |
-| PATCH  | `/api/v1/user/:id` | Admin, Super Admin, Sender, Receiver | Update user (self or by admin can change roll) |
-
-
-#### Register user
-**POST** `/api/v1/user/register`
-
-**Request Body**
-```json
-{ 
-  "name": "Sender",
-  "email": "sender@gmail.com",
-  "password": "S@12345678"
-}
+## 📂 Folder Structure
 ```
----
-
-### 📦 Parcel (`/api/v1/parcel`)
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| POST   | `/api/v1/parcel/create` | Sender, Admin, Super Admin | Create a new parcel |
-| GET    | `/api/v1/parcel/all-parcel` | Admin, Super Admin | Get all parcels (admin can filter with page=1&limit=10&status=DISPATCHED&trackingId=TRK-megzqfil-ALLRLD) |
-| GET    | `/api/v1/parcel/sender` | Sender | Get all parcels created by sender |
-| GET    | `/api/v1/parcel/receiver` | Receiver | Get parcels assigned to receiver |
-| GET    | `/api/v1/parcel/history` | Receiver | Get receiver’s delivery history |
-| GET    | `/api/v1/parcel/:id` | All Roles | Get parcel by ID |
-| GET    | `/api/v1/parcel/tracking-id/:id` | Public | Get parcel by Tracking ID |
-| DELETE | `/api/v1/parcel/:id` | Admin, Super Admin, Sender | Delete a parcel (Admins always can. If **Sender**, only when status = `REQUESTED`) |
-| PATCH  | `/api/v1/parcel/cancel/:id` | Sender | Cancel a parcel (if not shipped yet) |
-| PATCH  | `/api/v1/parcel/delivery/:id` | Receiver | Confirm parcel delivery |
-| PATCH  | `/api/v1/parcel/block/:id` | Admin, Super Admin | Block or unblock a parcel |
-| PATCH  | `/api/v1/parcel/status/:id` | Admin, Super Admin | Update parcel status (e.g., REQUESTED → IN_TRANSIT) |
-
----
-
-####  Create Parcel
-**POST** `/api/v1/parcels`
-
-**Request Body**
-```json
-{
-  "receiver": "64dcbf1a2f9a5b8c87654321",
-  "type": "Electronics",
-  "weight": 2.5,
-  "address": "123, Dhaka, Bangladesh",
-  "fee": 150,
-  "deliveryDate": "2025-08-25"
-}
-```
-### 📜 Status Logs
-Each parcel maintains a `statusLogs` array for audit trails:  
-```json
-{
-  "status": "DISPATCHED",
-  "location": "Warehouse - Dhaka",
-  "note": "Parcel dispatched",
-  "updatedBy": "64c8f3a9e23f2f45d1a1b123",
-  "timestamp": "2025-08-16T10:20:30Z"
-}
+src/
+ ├── app/
+ │    ├── modules/
+ │    │    ├── auth/
+ │    │    ├── tours/
+ │    │    ├── booking/
+ │    │    ├── reviews/
+ │    │    ├── payment/
+ │    │    ├── messages/
+ │    │    └── admin/
+ │    │
+ │    ├── middlewares/
+ │    ├── utils/
+ │    ├── interfaces/
+ │    └── config/
+ │
+ ├── server.ts
+ └── app.ts
 ```
 
+---
 
-## ▶️ Run the Project
-
-### 1. Clone the repo
+## ⚙️ Installation & Setup
+### **1️⃣ Clone the repository**
 ```sh
-git clone https://github.com/sultanmahmud07/Parcel-Delivery-API.git
-cd Parcel-Delivery-API
+git clone https://github.com/yourusername/local-guide-backend.git
+cd local-guide-backend
 ```
 
-### 2. Install dependencies
+### **2️⃣ Install dependencies**
 ```sh
 npm install
 ```
 
-### 3. Setup `.env`
-Create a `.env` file in the root with the values from above.
+### **3️⃣ Environment variables**
+Create a `.env` file:
 
-```env
+```
+DATABASE_URL=mongodb+srv://...
+JWT_ACCESS_SECRET=your_token
+JWT_REFRESH_SECRET=your_refresh_token
+SSL_STORE_ID=xxx
+SSL_STORE_PASSWORD=xxx
+FRONTEND_URL=http://localhost:3000
+CLOUDINARY_CLOUD_NAME=xxx
+CLOUDINARY_API_KEY=xxx
+CLOUDINARY_API_SECRET=xxx
 PORT=5000
-DB_URL=your_mongo_connection_string
-NODE_ENV=development
-
-# JWT
-JWT_ACCESS_SECRET=access_secret
-JWT_ACCESS_EXPIRES=1d
-JWT_REFRESH_SECRET=refresh_secret
-JWT_REFRESH_EXPIRES=30d
-
-# BCRYPT
-BCRYPT_SALT_ROUND=10
-
-# SUPER ADMIN
-SUPER_ADMIN_EMAIL=super@gmail.com
-SUPER_ADMIN_PASSWORD=12345678
-
-# Google
-GOOGLE_CLIENT_SECRET=your_google_secret
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
-
-# Express Session
-EXPRESS_SESSION_SECRET=express-session
-
-# Frontend URL
-FRONTEND_URL=http://localhost:5173
 ```
 
----
-### 4. Run server
+### **4️⃣ Run development server**
 ```sh
 npm run dev
 ```
 
-Server will run on: **http://localhost:5000**
+### **5️⃣ Build for production**
+```sh
+npm run build
+npm start
+```
+
+---
+
+## 🧪 Testing (Optional)
+```sh
+npm run test
+```
+
+---
+
+## 🤝 Contribution Guide
+1. Fork the project  
+2. Create your feature branch  
+3. Commit changes with meaningful messages  
+4. Open a Pull Request  
+
+---
+
+## 📜 License
+This project is licensed under the **MIT License**.
+
+---
+
+## 📧 Contact
+If you need help or want to collaborate:  
+**Email:** support@localguide.com  
+**Website:** https://localguide.com
