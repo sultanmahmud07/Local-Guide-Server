@@ -8,6 +8,7 @@ import { BookingRoutes } from "../modules/booking/booking.route"
 import { PaymentRoutes } from "../modules/payment/payment.route"
 import { OtpRoutes } from "../modules/otp/otp.route"
 import { ReviewRoutes } from "../modules/review/review.route"
+import { MessageRoutes } from "../modules/message/message.route"
 
 export const router = Router()
 
@@ -47,6 +48,10 @@ const moduleRoutes = [
     {
         path: "/contact",
         route: ContactRoutes
+    },
+    {
+        path: "/message",
+        route: MessageRoutes
     },
 ]
 
