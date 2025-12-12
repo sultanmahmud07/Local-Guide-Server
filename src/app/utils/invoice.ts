@@ -6,8 +6,9 @@ export interface IInvoiceData {
     transactionId: string;
     bookingDate: Date;
     userName: string;
-    tourTitle: string;
-    guestCount: number;
+    tourTitle?: string;
+    guestCount?: number;
+    totalPrice?: number;
     totalAmount: number;
 }
 

@@ -3,18 +3,19 @@ import httpStatus from "http-status-codes";
 import { uploadBufferToCloudinary } from "../../config/cloudinary.config";
 import AppError from "../../errorHelpers/AppError";
 import { generatePdf, IInvoiceData } from "../../utils/invoice";
-import { sendEmail } from "../../utils/sendEmail";
 import { Booking } from "../booking/booking.model";
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
 import { ITour } from "../tour/tour.interface";
-import { IUser, Role } from "../user/user.interface";
+import {  Role } from "../user/user.interface";
 import { PAYMENT_STATUS } from "./payment.interface";
 import { Payment } from "./payment.model";
 import { BOOKING_STATUS } from "../booking/booking.interface";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { paymentSearchableFields } from "./payment.constant";
 import { JwtPayload } from "jsonwebtoken";
+import { sendEmail } from "../../utils/sendEmail";
+import { User } from "../user/user.model";
 
 
 const initPayment = async (bookingId: string) => {
@@ -74,14 +75,17 @@ const successPayment = async (query: Record<string, string>) => {
         if (!updatedBooking) {
             throw new AppError(401, "Booking not found")
         }
-
+        const user = await User.findById(updatedBooking.user);
+        if (!user) {
+            throw new AppError(401, "Booking not found")
+        }
         const invoiceData: IInvoiceData = {
-            bookingDate: updatedBooking.createdAt as Date,
-            guestCount: updatedBooking.groupSize,
-            totalAmount: updatedPayment.amount,
-            tourTitle: (updatedBooking.tour as unknown as ITour).title,
-            transactionId: updatedPayment.transactionId,
-            userName: (updatedBooking.user as unknown as IUser).name
+            bookingDate: updatedBooking?.createdAt as Date,
+            guestCount: updatedBooking?.groupSize,
+            totalAmount: updatedPayment?.amount,
+            tourTitle: (updatedBooking?.tour as unknown as ITour)?.title,
+            transactionId: updatedPayment?.transactionId,
+            userName: user.name
         }
 
         const pdfBuffer = await generatePdf(invoiceData)
@@ -93,9 +97,10 @@ const successPayment = async (query: Record<string, string>) => {
         }
 
         await Payment.findByIdAndUpdate(updatedPayment._id, { invoiceUrl: cloudinaryResult.secure_url }, { runValidators: true, session })
-
+        // eslint-disable-next-line no-console
+        console.log("updatedBooking", updatedBooking)
         await sendEmail({
-            to: (updatedBooking.user as unknown as IUser).email,
+            to: user?.email || "mdshimul.m007@gmail.com",
             subject: "Your Payment Invoice",
             templateName: "invoice",
             templateData: invoiceData,
@@ -198,41 +203,41 @@ const getInvoiceDownloadUrl = async (paymentId: string) => {
 };
 const getAllPayment = async (query: Record<string, string>) => {
 
-   const queryBuilder = new QueryBuilder(Payment.find()
-      .populate("booking", "date time groupSize totalPrice phone address"), query)
+    const queryBuilder = new QueryBuilder(Payment.find()
+        .populate("booking", "date time groupSize totalPrice phone address"), query)
 
-  const payment = await queryBuilder
-    .search(paymentSearchableFields)
-    .filter()
-    .sort()
-    .fields()
-    .paginate()
+    const payment = await queryBuilder
+        .search(paymentSearchableFields)
+        .filter()
+        .sort()
+        .fields()
+        .paginate()
 
-  const [data, meta] = await Promise.all([
-    payment.build(),
-    queryBuilder.getMeta()
-  ])
-  return {
-    data,
-    meta
-  }
+    const [data, meta] = await Promise.all([
+        payment.build(),
+        queryBuilder.getMeta()
+    ])
+    return {
+        data,
+        meta
+    }
 };
 const getPaymentById = async (id: string) => {
-     const payment = await Payment.findOne({ _id: id })
-      .populate("booking", "date time groupSize totalPrice phone address")
-    
-     return {
-         data: payment,
-     }
+    const payment = await Payment.findOne({ _id: id })
+        .populate("booking", "date time groupSize totalPrice phone address")
+
+    return {
+        data: payment,
+    }
 }
 const deletePayment = async (paymentId: string,) => {
-  const payment = await Payment.findById(paymentId);
-  if (!payment) {
-    throw new AppError(httpStatus.NOT_FOUND, "Payment info not found");
-  }
+    const payment = await Payment.findById(paymentId);
+    if (!payment) {
+        throw new AppError(httpStatus.NOT_FOUND, "Payment info not found");
+    }
     await Payment.findByIdAndDelete(paymentId);
     return { data: paymentId };
-  
+
 };
 const updatePayment = async (
     paymentId: string,
