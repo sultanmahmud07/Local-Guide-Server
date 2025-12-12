@@ -6,19 +6,19 @@ import { StatsController } from "./stats.controller";
 const router = express.Router();
 
 router.get(
-    "/sender",
+    "/tourist",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.TOURIST),
-    StatsController.getSenderStats
+    StatsController.getTouristStats
 );
 router.get(
-    "/receiver",
+    "/guide",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN, Role.GUIDE),
-    StatsController.getReceiverStats
+    StatsController.getGuideStats
 );
 router.get(
-    "/user",
+    "/admin",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-    StatsController.getUserStats
+    StatsController.getAdminStats
 );
 
 export const StatsRoutes = router;
