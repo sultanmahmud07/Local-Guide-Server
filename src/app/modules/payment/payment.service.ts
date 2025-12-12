@@ -1,21 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from "http-status-codes";
-import { uploadBufferToCloudinary } from "../../config/cloudinary.config";
 import AppError from "../../errorHelpers/AppError";
-import { generatePdf, IInvoiceData } from "../../utils/invoice";
 import { Booking } from "../booking/booking.model";
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
-import { ITour } from "../tour/tour.interface";
-import {  Role } from "../user/user.interface";
+import { Role } from "../user/user.interface";
 import { PAYMENT_STATUS } from "./payment.interface";
 import { Payment } from "./payment.model";
 import { BOOKING_STATUS } from "../booking/booking.interface";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { paymentSearchableFields } from "./payment.constant";
 import { JwtPayload } from "jsonwebtoken";
-// import { sendEmail } from "../../utils/sendEmail";
-import { User } from "../user/user.model";
 
 
 const initPayment = async (bookingId: string) => {
@@ -63,40 +58,40 @@ const successPayment = async (query: Record<string, string>) => {
             throw new AppError(401, "Payment not found")
         }
 
-        const updatedBooking = await Booking
-            .findByIdAndUpdate(
+        // const updatedBooking = await Booking
+         await Booking.findByIdAndUpdate(
                 updatedPayment?.booking,
                 { paymentStatus: PAYMENT_STATUS.PAID, status: BOOKING_STATUS.COMPLETED },
                 { new: true, runValidators: true, session }
             )
-            .populate("tour", "title")
-            .populate("user", "name email")
+            // .populate("tour", "title")
+            // .populate("user", "name email")
 
-        if (!updatedBooking) {
-            throw new AppError(401, "Booking not found")
-        }
-        const user = await User.findById(updatedBooking.user);
-        if (!user) {
-            throw new AppError(401, "Booking not found")
-        }
-        const invoiceData: IInvoiceData = {
-            bookingDate: updatedBooking?.createdAt as Date,
-            guestCount: updatedBooking?.groupSize,
-            totalAmount: updatedPayment?.amount,
-            tourTitle: (updatedBooking?.tour as unknown as ITour)?.title,
-            transactionId: updatedPayment?.transactionId,
-            userName: user.name
-        }
+        // if (!updatedBooking) {
+        //     throw new AppError(401, "Booking not found")
+        // }
+        // const user = await User.findById(updatedBooking.user);
+        // if (!user) {
+        //     throw new AppError(401, "Booking not found")
+        // }
+        // const invoiceData: IInvoiceData = {
+        //     bookingDate: updatedBooking?.createdAt as Date,
+        //     guestCount: updatedBooking?.groupSize,
+        //     totalAmount: updatedPayment?.amount,
+        //     tourTitle: (updatedBooking?.tour as unknown as ITour)?.title,
+        //     transactionId: updatedPayment?.transactionId,
+        //     userName: user.name
+        // }
 
-        const pdfBuffer = await generatePdf(invoiceData)
+        // const pdfBuffer = await generatePdf(invoiceData)
 
-        const cloudinaryResult = await uploadBufferToCloudinary(pdfBuffer, "invoice")
+        // const cloudinaryResult = await uploadBufferToCloudinary(pdfBuffer, "invoice")
 
-        if (!cloudinaryResult) {
-            throw new AppError(401, "Error uploading pdf")
-        }
+        // if (!cloudinaryResult) {
+        //     throw new AppError(401, "Error uploading pdf")
+        // }
 
-        await Payment.findByIdAndUpdate(updatedPayment._id, { invoiceUrl: cloudinaryResult.secure_url }, { runValidators: true, session })
+        // await Payment.findByIdAndUpdate(updatedPayment._id, { invoiceUrl: cloudinaryResult.secure_url }, { runValidators: true, session })
         // await sendEmail({
         //     to: user?.email || "mdshimul.m007@gmail.com",
         //     subject: "Your Payment Invoice",
