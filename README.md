@@ -6,8 +6,8 @@ This repository contains authentication, tour management, booking workflow, revi
 ---
 
 ## 🌍 Live API URL  
-**Production:** https://your-api-domain.com  
-**Swagger Docs (optional):** https://your-api-domain.com/api-docs  
+**Production:** https://local-guide-client-fz9u.vercel.app
+**Backend API:** https://native-ways-api.onrender.com
 
 ---
 
@@ -97,8 +97,8 @@ src/
 ## ⚙️ Installation & Setup
 ### **1️⃣ Clone the repository**
 ```sh
-git clone https://github.com/yourusername/local-guide-backend.git
-cd local-guide-backend
+git clone https://github.com/yourusername/local-guide-server.git
+cd local-guide-server
 ```
 
 ### **2️⃣ Install dependencies**
@@ -110,16 +110,68 @@ npm install
 Create a `.env` file:
 
 ```
-DATABASE_URL=mongodb+srv://...
-JWT_ACCESS_SECRET=your_token
-JWT_REFRESH_SECRET=your_refresh_token
-SSL_STORE_ID=xxx
-SSL_STORE_PASSWORD=xxx
-FRONTEND_URL=http://localhost:3000
-CLOUDINARY_CLOUD_NAME=xxx
-CLOUDINARY_API_KEY=xxx
-CLOUDINARY_API_SECRET=xxx
 PORT=5000
+DB_URL=mongodb+srv://<username>:<password>@cluster0.example.mongodb.net/nativeWaysDB?retryWrites=true&w=majority
+NODE_ENV=development
+
+# JWT Authentication
+JWT_ACCESS_SECRET=your_super_secret_access_key_123
+JWT_ACCESS_EXPIRES=1d
+JWT_REFRESH_SECRET=your_super_secret_refresh_key_456
+JWT_REFRESH_EXPIRES=30d
+
+# BCRYPT Hashing
+BCRYPT_SALT_ROUND=12
+
+# Super Admin Credentials
+SUPER_ADMIN_EMAIL=admin@nativeways.com
+SUPER_ADMIN_PASSWORD=strong_password_123
+
+# Google OAuth
+GOOGLE_CLIENT_ID=1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-abcdefghijklmnopqrstuvwxyz123456
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
+
+# Express Session
+EXPRESS_SESSION_SECRET=your_session_secret_key
+
+# Frontend URL (CORS)
+FRONTEND_URL=http://localhost:3000
+
+# SSLCommerz Payment Gateway (Sandbox Credentials)
+SSL_STORE_ID=testbox
+SSL_STORE_PASS=testbox@ssl
+SSL_PAYMENT_API=https://sandbox.sslcommerz.com/gwprocess/v3/api.php
+SSL_VALIDATION_API=https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php
+SSL_IPN_URL=http://localhost:5000/api/v1/payment/validate-payment
+
+# Payment Backend Redirect URLs
+SSL_SUCCESS_BACKEND_URL=http://localhost:5000/api/v1/payment/success
+SSL_FAIL_BACKEND_URL=http://localhost:5000/api/v1/payment/fail
+SSL_CANCEL_BACKEND_URL=http://localhost:5000/api/v1/payment/cancel
+
+# Payment Frontend Redirect URLs
+SSL_SUCCESS_FRONTEND_URL=http://localhost:3000/payment/success
+SSL_FAIL_FRONTEND_URL=http://localhost:3000/payment/fail
+SSL_CANCEL_FRONTEND_URL=http://localhost:3000/payment/cancel
+
+# Cloudinary (Image Upload)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=123456789012345
+CLOUDINARY_API_SECRET=abcdefghijklmnopqrstuvwxyz123
+
+# SMTP Email Service (Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=abcd efgh ijkl mnop
+SMTP_FROM=no-reply@nativeways.com
+
+# Redis Cache
+REDIS_HOST=redis-12345.c1.us-east-1-2.ec2.cloud.redislabs.com
+REDIS_PORT=6379
+REDIS_USERNAME=default
+REDIS_PASSWORD=your_redis_password_here
 ```
 
 ### **4️⃣ Run development server**
@@ -135,27 +187,7 @@ npm start
 
 ---
 
-## 🧪 Testing (Optional)
-```sh
-npm run test
-```
-
----
-
-## 🤝 Contribution Guide
-1. Fork the project  
-2. Create your feature branch  
-3. Commit changes with meaningful messages  
-4. Open a Pull Request  
-
----
-
-## 📜 License
-This project is licensed under the **MIT License**.
-
----
-
 ## 📧 Contact
 If you need help or want to collaborate:  
 **Email:** support@localguide.com  
-**Website:** https://localguide.com
+**Website:** https://local-guide-client-fz9u.vercel.app

@@ -23,8 +23,9 @@ app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
+app.set("trust proxy", 1);
 app.use((0, cors_1.default)({
-    origin: ["http://localhost:3000", "https://parcel-delivery-frontend-nine.vercel.app"],
+    origin: ["http://localhost:3000", "https://local-guide-client-fz9u.vercel.app"],
     // methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     credentials: true,
 }));

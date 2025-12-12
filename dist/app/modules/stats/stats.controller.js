@@ -13,9 +13,9 @@ exports.StatsController = void 0;
 const catchAsync_1 = require("../../utils/catchAsync");
 const sendResponse_1 = require("../../utils/sendResponse");
 const stats_service_1 = require("./stats.service");
-const getSenderStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getTouristStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const decodeToken = req.user;
-    const stats = yield stats_service_1.StatsService.getSenderStats(decodeToken.userId);
+    const stats = yield stats_service_1.StatsService.getTouristStats(decodeToken.userId);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: 200,
         success: true,
@@ -23,9 +23,9 @@ const getSenderStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void
         data: stats,
     });
 }));
-const getReceiverStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getGuideStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const decodeToken = req.user;
-    const stats = yield stats_service_1.StatsService.getReceiverStats(decodeToken.userId);
+    const stats = yield stats_service_1.StatsService.getGuideStats(decodeToken.userId);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: 200,
         success: true,
@@ -33,17 +33,17 @@ const getReceiverStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(vo
         data: stats,
     });
 }));
-const getUserStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const stats = yield stats_service_1.StatsService.getUserStats();
+const getAdminStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const stats = yield stats_service_1.StatsService.getAdminStats();
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: 200,
         success: true,
-        message: "User stats fetched successfully",
+        message: "Admin stats fetched successfully",
         data: stats,
     });
 }));
 exports.StatsController = {
-    getSenderStats,
-    getReceiverStats,
-    getUserStats,
+    getTouristStats,
+    getGuideStats,
+    getAdminStats,
 };

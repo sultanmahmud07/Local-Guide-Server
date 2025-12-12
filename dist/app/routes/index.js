@@ -11,6 +11,7 @@ const booking_route_1 = require("../modules/booking/booking.route");
 const payment_route_1 = require("../modules/payment/payment.route");
 const otp_route_1 = require("../modules/otp/otp.route");
 const review_route_1 = require("../modules/review/review.route");
+const message_route_1 = require("../modules/message/message.route");
 exports.router = (0, express_1.Router)();
 const moduleRoutes = [
     {
@@ -48,6 +49,10 @@ const moduleRoutes = [
     {
         path: "/contact",
         route: contact_route_1.ContactRoutes
+    },
+    {
+        path: "/message",
+        route: message_route_1.MessageRoutes
     },
 ];
 moduleRoutes.forEach((route) => {
