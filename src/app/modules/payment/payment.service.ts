@@ -14,7 +14,7 @@ import { BOOKING_STATUS } from "../booking/booking.interface";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { paymentSearchableFields } from "./payment.constant";
 import { JwtPayload } from "jsonwebtoken";
-import { sendEmail } from "../../utils/sendEmail";
+// import { sendEmail } from "../../utils/sendEmail";
 import { User } from "../user/user.model";
 
 
@@ -97,21 +97,19 @@ const successPayment = async (query: Record<string, string>) => {
         }
 
         await Payment.findByIdAndUpdate(updatedPayment._id, { invoiceUrl: cloudinaryResult.secure_url }, { runValidators: true, session })
-        // eslint-disable-next-line no-console
-        console.log("updatedBooking", updatedBooking)
-        await sendEmail({
-            to: user?.email || "mdshimul.m007@gmail.com",
-            subject: "Your Payment Invoice",
-            templateName: "invoice",
-            templateData: invoiceData,
-            attachments: [
-                {
-                    filename: "invoice.pdf",
-                    content: pdfBuffer,
-                    contentType: "application/pdf"
-                }
-            ]
-        })
+        // await sendEmail({
+        //     to: user?.email || "mdshimul.m007@gmail.com",
+        //     subject: "Your Payment Invoice",
+        //     templateName: "invoice",
+        //     templateData: invoiceData,
+        //     attachments: [
+        //         {
+        //             filename: "invoice.pdf",
+        //             content: pdfBuffer,
+        //             contentType: "application/pdf"
+        //         }
+        //     ]
+        // })
 
         await session.commitTransaction(); //transaction
         session.endSession()
